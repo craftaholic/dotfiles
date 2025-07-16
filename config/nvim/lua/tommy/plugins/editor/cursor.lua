@@ -5,7 +5,7 @@ return {
   version = false, -- Set this to "*" to always pull the latest release version, or set it to false to update to the latest code changes.
   opts = {
     ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-    provider = "openai", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
+    provider = "claude", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
 
     mode = "agentic",
     -- WARNING: Since auto-suggestions are a high-frequency operation and therefore expensive,
