@@ -96,3 +96,6 @@ source <(kubectl completion zsh)
 
 ### Optional: Clear screen on load
 clear
+
+# Added by Windsurf
+export PATH="/Users/tranthang/.codeium/windsurf/bin:$PATH"
