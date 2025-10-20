@@ -43,24 +43,12 @@ tasks:
 
   copydotfiles:
     desc: create symlink to dotfiles
-    vars:
-      COPYDOTFILES_MODE: '{{default "" .COPYDOTFILES_MODE}}' 
-    env: 
-      FORCE_FLAG: ""
     internal: true
     silent: false
     cmds: 
       - |
-        if [ "{{.COPYDOTFILES_MODE}}" = "force" ]; then FORCE_FLAG="-f"; fi
-        ln -s ${FORCE_FLAG} "$(pwd)/config/hypr"               "$HOME/.config/hypr"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/libinput-gestures"  "$HOME/.config/libinput-gestures"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/nvim"               "$HOME/.config/nvim"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/sway"               "$HOME/.config/sway"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/swaylock"           "$HOME/.config/swaylock"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/waybar"             "$HOME/.config/waybar"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/wezterm"            "$HOME/.config/wezterm"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/.aerospace.toml"    "$HOME/.aerospace.toml"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/.p10k.zsh"          "$HOME/.p10k.zsh"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/.tmux.conf"         "$HOME/.tmux.conf"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/.vimrc"             "$HOME/.vimrc"
-        ln -s ${FORCE_FLAG} "$(pwd)/config/.zshrc"             "$HOME/.zshrc"
+
+        stow -R --target "$HOME" aerospace
+        stow -R --target "$HOME" nvim
+        stow -R --target "$HOME" wezterm
+        stow -R --target "$HOME" zsh
