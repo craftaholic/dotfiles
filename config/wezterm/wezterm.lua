@@ -2,7 +2,7 @@ local wezterm = require("wezterm")
 
 local config = {
   font = wezterm.font('JetBrains Mono', { weight = "Regular", stretch = "Normal", style = "Normal" }),
-  font_size = 18.0,
+  font_size = 16.0,
   harfbuzz_features = { "calt=0", "clig=0", "liga=0" },
   audible_bell = "Disabled",
   check_for_updates = true,
@@ -14,15 +14,18 @@ local config = {
   cursor_blink_rate = 360,
   default_cursor_style = 'BlinkingBlock',
   -- Add this if your laptop/pc doesn't have gpu
-  -- animation_fps = 1,
+  animation_fps = 1,
   cursor_blink_ease_in = 'Constant',
   cursor_blink_ease_out = 'Constant',
 
-  color_scheme = "moonfly",
+  color_scheme = "catppuccin",
+  front_end = "WebGpu",
 
   colors = {
-    cursor_bg = "#eb6f92",
+    -- cursor_bg = "#eb6f92",
   },
+
+  max_fps = 120,
 
   inactive_pane_hsb = {
     hue = 1.0,
@@ -79,7 +82,7 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
   -- config.term = "" -- Set to empty so FZF works on windows
   table.insert(config.launch_menu, { label = "PowerShell", args = { "powershell.exe", "-NoLogo" } })
 else
-  config.default_prog = { '/usr/bin/env', 'zsh', '-l' }
+  config.default_prog = { '/usr/bin/env', 'zsh' }
   config.default_cwd = "~/Documents"
 end
 

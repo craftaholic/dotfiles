@@ -1,34 +1,45 @@
-# # Set up the prompt at the bottom of the terminal
-# printf "\e[H\ec\e[${LINES}B"
-# alias clear="clear && printf '\e[H\ec\e[${LINES}B'"
-#
-# print_horizontal_line() {
-#     local cols=$(tput cols)  # Get the number of columns in the terminal
-#     printf '%*s\n' "$cols" '' | tr ' ' '-'
-# }
-#
-# # Example usage in precmd function
-# precmd() {
-#     print_horizontal_line
-# }
-
-### Instant Prompt (Powerlevel10k) — Keep at the top
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-### Devbox Shell + Paths
-eval "$(devbox global shellenv)"
-typeset -U path cdpath fpath manpath
-path+="${(s/:/)$(devbox global path)/.devbox/nix/profile/default/share/powerlevel10k}"
-fpath+="${(s/:/)$(devbox global path)/.devbox/nix/profile/default/share/powerlevel10k}"
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#   . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
 
 ### Prompt + Plugins
-source "$(devbox global path)/.devbox/nix/profile/default/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
-source "$(devbox global path)/.devbox/nix/profile/default/share/oh-my-zsh/oh-my-zsh.sh"
-source "$(devbox global path)/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$(devbox global path)/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+# Disable SSH checking in powerlevel10k (was taking 48ms)
+POWERLEVEL9K_DISABLE_GITSTATUS=true
+POWERLEVEL9K_DISABLE_SSH=true
+
+DISABLE_AUTO_UPDATE="true"
+DISABLE_MAGIC_FUNCTIONS="true"
+DISABLE_COMPFIX="true"
+
+### Devbox Shell + Paths
+# Cache devbox paths to avoid multiple calls
+if [[ ! -f "$HOME/.devbox_cache" ]] || [[ ! -f "$HOME/.devbox_path_cache" ]]; then
+  devbox global shellenv > "$HOME/.devbox_cache" 2>/dev/null
+  devbox global path > "$HOME/.devbox_path_cache" 2>/dev/null
+fi
+. "$HOME/.devbox_cache" 2>/dev/null
+
+# Store path for reuse
+DEVBOX_PATH=$(cat "$HOME/.devbox_path_cache" 2>/dev/null)
+
+typeset -U path cdpath fpath manpath
+path+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
+fpath+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
+
+# Use direct paths instead of subshell calls
+. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
+. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/oh-my-zsh/oh-my-zsh.sh"
+
+# Load these plugins at the end since they're less critical
+. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan,underline"
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE="20"
+ZSH_AUTOSUGGEST_USE_ASYNC=1
 
 ### History
 HISTSIZE=10000
@@ -45,11 +56,7 @@ export PATH="$PATH:$HOME/go/bin"
 export GOBIN="$HOME/go/bin"
 export dry="--dry-run=client -o yaml"
 
-### TheFuck
-eval "$(thefuck --alias)"
-
 ### Aliases
-alias fnvim='nvim $(fzf --height 40% --preview "bat --color=always --style=numbers {}")'
 alias ga='git add'
 alias gc='git commit -m'
 alias gp='git push'
@@ -78,24 +85,9 @@ alias tn='tmux new-session -s'
 
 # misc
 alias ls='ls -la --color'
-alias note='/Users/tranthang/Library/Mobile Documents/iCloud~md~obsidian/Documents/tommy-note-vault'
-alias tera='terraform'
-
-### Kubernetes Completion
-source <(kubectl completion zsh)
-
-### Powerlevel10k Prompt Config
-[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
-
-### Google Cloud SDK
-[[ -f "$HOME/Documents/projects/development/google-cloud-sdk/path.zsh.inc" ]] && source "$HOME/Documents/projects/development/google-cloud-sdk/path.zsh.inc"
-[[ -f "$HOME/Documents/projects/development/google-cloud-sdk/completion.zsh.inc" ]] && source "$HOME/Documents/projects/development/google-cloud-sdk/completion.zsh.inc"
 
 ### Optional local env
-[[ -f ~/.env ]] && source ~/.env
+[[ -f ~/.env ]] && . ~/.env
 
-### Optional: Clear screen on load
-clear
-
-# Added by Windsurf
-export PATH="/Users/tranthang/.codeium/windsurf/bin:$PATH"
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || . ~/.p10k.zsh

@@ -1,5 +1,6 @@
 return {
   "sphamba/smear-cursor.nvim",
+  enabled = false,
 
   opts = {
     stiffness = 0.9,                      -- 0.6      [0, 1]
@@ -8,7 +9,7 @@ return {
     trailing_stiffness_insert_mode = 0.6, -- 0.4      [0, 1]
     distance_stop_animating = 0.7,        -- 0.1      > 0
 
-    time_interval = 10,
+    time_interval = 30,
     cursor_color = "none",
 
     -- Smear cursor when switching buffers or windows.

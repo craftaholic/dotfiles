@@ -34,7 +34,6 @@
     "terraform@1.11.2",
     "markdownlint-cli2@latest",
     "luarocks@latest",
-    "nodejs@24.1.0",
     "claude-code@latest",
     "net-tools@latest",
     "telnet@latest",
