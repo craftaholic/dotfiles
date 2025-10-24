@@ -21,8 +21,6 @@ tasks:
 
   setup:
     desc: "install the environment, setup env for macOS and Ubuntu. To force update existing files run: task setup -- force"
-    vars:
-      COPYDOTFILES_MODE: "{{.CLI_ARGS}}"
     cmds:
       - echo "----------------------------------------------------------------"
       - echo "This requires sudo permission to run"
@@ -30,14 +28,18 @@ tasks:
       - echo "----------------------------------------------------------------"
       - sudo echo "Starting to setup system"
       - echo "----------------------------------------------------------------"
+      - |
+        # Install stow if it doesn't exist
+        if ! command -v stow &> /dev/null; then
+          echo "Installing stow..."
+          curl -s https://ftp.gnu.org/gnu/stow/stow-latest.tar.gz | tar xz && cd stow-* && ./configure && make && sudo make install
+        fi
+      - echo "Creating ~/.config directory if it doesn't exist..."
+      - mkdir -p ~/.config
       - task: copydotfiles
-        vars: {
-          COPYDOTFILES_MODE: '{{.COPYDOTFILES_MODE}}'
-        }
       - command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
       - sh -c '[ -d "{{.DEVBOX_DIR_PATH}}" ] || mkdir -p "{{.DEVBOX_DIR_PATH}}"'
       - ln -sf "$(pwd)/devbox.json" "{{.DEVBOX_DIR_PATH}}/devbox.json"
-      # - ln -sf "$(pwd)/devbox.lock" "{{.DEVBOX_DIR_PATH}}/devbox.lock"
       - devbox global install 
     silent: true
 
@@ -47,8 +49,11 @@ tasks:
     silent: false
     cmds: 
       - |
-
-        stow -R --target "$HOME" aerospace
-        stow -R --target "$HOME" nvim
-        stow -R --target "$HOME" wezterm
-        stow -R --target "$HOME" zsh
+        # Stow all configuration folders to create symlinks in the home directory
+        for dir in */; do
+          dir=${dir%/} # Remove trailing slash
+          if [ -d "$dir" ] && [ "$dir" != "node_modules" ] && [ "$dir" != ".git" ]; then
+            echo "Creating symlinks for $dir"
+            stow -R --target "$HOME" "$dir"
+          fi
+        done

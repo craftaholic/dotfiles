@@ -21,7 +21,6 @@
     "thefuck@latest",
     "gnumake@latest",
     "awscli2@latest",
-    "terragrunt@latest",
     "kubectl@latest",
     "go-task@latest",
     "golangci-lint@latest",
