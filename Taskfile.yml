@@ -28,25 +28,18 @@ tasks:
       - echo "----------------------------------------------------------------"
       - sudo echo "Starting to setup system"
       - echo "----------------------------------------------------------------"
-      - |
-        # Install stow if it doesn't exist
-        if ! command -v stow &> /dev/null; then
-          echo "Installing stow..."
-          curl -s https://ftp.gnu.org/gnu/stow/stow-latest.tar.gz | tar xz && cd stow-* && ./configure && make && sudo make install
-        fi
+      - which stow &> /dev/null || { echo "stow not installed, please install stow first"; exit 1; }
       - echo "Creating ~/.config directory if it doesn't exist..."
       - mkdir -p ~/.config
       - task: copydotfiles
       - command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
-      - sh -c '[ -d "{{.DEVBOX_DIR_PATH}}" ] || mkdir -p "{{.DEVBOX_DIR_PATH}}"'
-      - ln -sf "$(pwd)/devbox.json" "{{.DEVBOX_DIR_PATH}}/devbox.json"
       - devbox global install 
     silent: true
 
   copydotfiles:
     desc: create symlink to dotfiles
     internal: true
-    silent: false
+    silent: true
     cmds: 
       - |
         # Stow all configuration folders to create symlinks in the home directory

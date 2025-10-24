@@ -14,12 +14,18 @@ This project requires executing a setup script to configure the local machine en
 ├── LICENSE
 ├── README.md
 ├── Taskfile.yml
-├── aerospace                   # macOS window manager configuration
-├── nvim                        # Neovim configuration
-├── tmux                        # Tmux configuration
-├── wezterm                     # Wezterm terminal configuration
-├── zsh                         # Zsh shell configuration
-└── devbox.json                 # Maintain all your binaries in declarative way
+├── aerospace                               # macOS window manager configuration
+├── nvim                                    # Neovim configuration
+├── packages                                # Contains the devbox configuration
+│   └── .local
+│       └── share
+│           └── devbox
+│               └── global
+│                   └── default
+│                       └── devbox.json     # Maintain all your binaries in declarative way
+├── tmux                                    # Tmux configuration
+├── wezterm                                 # Wezterm terminal configuration
+└── zsh                                     # Zsh shell configuration
 ```
 
 # Prerequisites
@@ -27,6 +33,7 @@ This project requires executing a setup script to configure the local machine en
 To run this framework, you only need to have Taskfile (similar to Makefile). The rest, including GNU Stow and Devbox, will be automatically installed during setup.
 
 - **Taskfile**: To install Taskfile, follow this guide: [Link to install Taskfile](https://taskfile.dev/installation/)
+- **stow**: You will need to install stow, to install use brew, apt, or any package manager
 
 # Neovim Dotfiles
 
@@ -42,18 +49,12 @@ task setup
 >**NOTE**: This command will only succeed if the target configuration files do not exist beforehand.
 So you will need to backup your existing configuration files firsts.
 
-To force overwrite (In case this framework is the main way you maintain your environment)
-```
-task setup -- force
-```
-> **IMPORTANT**: When running `task setup -- force`, it will overwrite all of your environment configuration files if exists. Please run it with care and backup your configuration first. To check which files will be overwritten, check taskfile.yml
-
 This command will:
 - Install GNU Stow if it's not already installed.
 - Create ~/.config directory if it doesn't exist.
 - Create symlinks from your home directory to the configuration files in this repository using GNU Stow.
 - Install Devbox if it's not already installed.
-- Install all required binaries (e.g., git, zsh).
+- Install all required binaries (e.g., git, zsh) using the devbox.json configuration located in packages/.local/share/devbox/global/default/.
 
 # Taskfile Commands
 
@@ -73,10 +74,18 @@ The `Taskfile.yml` provides several tasks to manage your environment:
   ```
   task setup
   ```
-  Or
-  ```
-  task setup -- force
-  ```
+
+# Devbox Integration
+
+The devbox configuration is managed through the devbox.json file located at:
+```
+packages/.local/share/devbox/global/default/devbox.json
+```
+
+This file defines all the packages that will be installed and maintained by Devbox. To add, remove, or update packages, edit this file and run `devbox global install` or use the setup task:
+```
+task setup
+```
 
 # For WSL Specifically
 
