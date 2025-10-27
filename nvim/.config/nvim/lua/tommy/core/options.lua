@@ -20,7 +20,7 @@ vim.g.loaded_netrwPlugin = 1
 -- opt.rocks.hererocks = false
 -- opt.rocks.enabled = false
 
-opt.shell = "/usr/bin/env zsh"
+opt.shell = "/bin/zsh"
 opt.autowrite = true          -- Enable auto write
 opt.clipboard = "unnamedplus" -- Sync with system clipboard
 opt.completeopt = "menu,menuone,noselect"

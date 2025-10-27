@@ -1,18 +1,26 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-### Prompt + Plugins
-# Disable SSH checking in powerlevel10k (was taking 48ms)
-POWERLEVEL9K_DISABLE_GITSTATUS=true
-POWERLEVEL9K_DISABLE_SSH=true
-
 DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
 DISABLE_COMPFIX="true"
+
+### Auto-compile Zsh files if they've been modified
+# Compile main config files
+for file in ~/.zshrc ~/.zshenv ~/.zprofile ~/.zlogin ~/.zlogout ~/.p10k.zsh; do
+  if [[ -f $file ]] && ([[ ! -f ${file}.zwc ]] || [[ $file -nt ${file}.zwc ]]); then
+    zcompile $file
+  fi
+done
+
+# Compile devbox cache files
+for file in ~/.devbox_cache; do
+  if [[ -f $file ]] && ([[ ! -f ${file}.zwc ]] || [[ $file -nt ${file}.zwc ]]); then
+    zcompile $file
+  fi
+done
+
+# Compile completion dump if it exists
+if [[ -f ~/.zcompdump ]] && ([[ ! -f ~/.zcompdump.zwc ]] || [[ ~/.zcompdump -nt ~/.zcompdump.zwc ]]); then
+  zcompile ~/.zcompdump
+fi
 
 ### Devbox Shell + Paths
 # Cache devbox paths to avoid multiple calls
@@ -85,9 +93,6 @@ alias tn='tmux new-session -s'
 
 # misc
 alias ls='ls -la --color'
-
-### Optional local env
-[[ -f ~/.env ]] && . ~/.env
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || . ~/.p10k.zsh

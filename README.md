@@ -34,6 +34,7 @@ To run this framework, you only need to have Taskfile (similar to Makefile). The
 
 - **Taskfile**: To install Taskfile, follow this guide: [Link to install Taskfile](https://taskfile.dev/installation/)
 - **stow**: You will need to install stow, to install use brew, apt, or any package manager
+- **zsh**
 
 # Neovim Dotfiles
 
