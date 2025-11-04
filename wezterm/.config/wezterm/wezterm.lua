@@ -3,7 +3,7 @@ local wezterm = require("wezterm")
 local config = {
   font = wezterm.font('JetBrains Mono', { weight = "Regular", stretch = "Normal", style = "Normal" }),
   font_size = 16.0,
-  harfbuzz_features = { "calt=0", "clig=0", "liga=0" },
+  -- harfbuzz_features = { "calt=0", "clig=0", "liga=0" },
   audible_bell = "Disabled",
   check_for_updates = true,
   launch_menu = {},
@@ -11,21 +11,21 @@ local config = {
   leader = { key = "m", mods = "CTRL", timeout_milliseconds = 2000 },
   disable_default_key_bindings = true,
 
-  cursor_blink_rate = 360,
-  default_cursor_style = 'BlinkingBlock',
+  -- cursor_blink_rate = 360,
+  -- default_cursor_style = 'BlinkingBlock',
   -- Add this if your laptop/pc doesn't have gpu
-  animation_fps = 1,
+  -- animation_fps = 1,
   cursor_blink_ease_in = 'Constant',
   cursor_blink_ease_out = 'Constant',
 
   color_scheme = "catppuccin",
-  front_end = "WebGpu",
+  -- front_end = "WebGpu",
 
   colors = {
-    -- cursor_bg = "#eb6f92",
+    cursor_bg = "#eb6f92",
   },
 
-  max_fps = 120,
+  -- max_fps = 120,
 
   inactive_pane_hsb = {
     hue = 1.0,
@@ -36,9 +36,18 @@ local config = {
   enable_tab_bar = false,
 
   window_decorations = "RESIZE",
-  window_background_opacity = 0.7,
-  text_background_opacity = 1.0,
-  macos_window_background_blur = 25,
+  background = {
+    {
+      source = {
+        Color = '#181825'
+      },
+      width = "100%",
+      height = "100%",
+    },
+  },
+  -- window_background_opacity = 0.7,
+  -- text_background_opacity = 1.0,
+  -- macos_window_background_blur = 25,
 
   keys = {
     -- Send "CTRL-ALT" to the terminal when pressing CTRL-ALT, CTRL-ALT
