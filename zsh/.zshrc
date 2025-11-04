@@ -1,10 +1,6 @@
-DISABLE_AUTO_UPDATE="true"
-DISABLE_MAGIC_FUNCTIONS="true"
-DISABLE_COMPFIX="true"
-
 ### Auto-compile Zsh files if they've been modified
 # Compile main config files
-for file in ~/.zshrc ~/.zshenv ~/.zprofile ~/.zlogin ~/.zlogout ~/.p10k.zsh; do
+for file in ~/.zshrc ~/.zshenv ~/.zprofile ~/.zlogin ~/.zlogout; do
   if [[ -f $file ]] && ([[ ! -f ${file}.zwc ]] || [[ $file -nt ${file}.zwc ]]); then
     zcompile $file
   fi
@@ -34,24 +30,20 @@ fi
 DEVBOX_PATH=$(cat "$HOME/.devbox_path_cache" 2>/dev/null)
 
 typeset -U path cdpath fpath manpath
-path+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
-fpath+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
+# path+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
+# fpath+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
 
 # Use direct paths instead of subshell calls
-. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
-. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/oh-my-zsh/oh-my-zsh.sh"
+# . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
+# . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/oh-my-zsh/oh-my-zsh.sh"
 
 # Load these plugins at the end since they're less critical
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan,underline"
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE="20"
-ZSH_AUTOSUGGEST_USE_ASYNC=1
-
 ### History
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=1000
+SAVEHIST=1000
 HISTFILE="$HOME/.zsh_history"
 mkdir -p "$(dirname "$HISTFILE")"
 setopt HIST_FCNTL_LOCK HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
@@ -94,5 +86,8 @@ alias tn='tmux new-session -s'
 # misc
 alias ls='ls -la --color'
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || . ~/.p10k.zsh
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan,underline"
+# ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE="20"
+# ZSH_AUTOSUGGEST_USE_ASYNC=1
+
+eval "$(starship init zsh)"

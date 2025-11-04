@@ -39,7 +39,8 @@
     "k3d@latest",
     "python313Packages.cfn-lint@latest",
     "amazon-q-cli@latest",
-    "pnpm@latest"
+    "pnpm@latest",
+    "starship@latest"
   ],
   "shell": {
     "init_hook": [
