@@ -82,7 +82,7 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
   -- config.term = "" -- Set to empty so FZF works on windows
   table.insert(config.launch_menu, { label = "PowerShell", args = { "powershell.exe", "-NoLogo" } })
 else
-  config.default_prog = { '/bin/zsh' }
+  config.default_prog = { '/bin/zsh', '-l' }
   config.default_cwd = "~/Documents"
 end
 
