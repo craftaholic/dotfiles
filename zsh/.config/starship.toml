@@ -7,7 +7,20 @@ $os\
 $username\
 [](bg:peach fg:red)\
 $directory\
-[](fg:peach)
+[](bg:blue fg:peach)\
+$git_branch\
+$git_status\
+[](fg:blue bg:green)\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+[](fg:green)
 [╰─](bold red)\
 $character"""
 
@@ -48,19 +61,19 @@ format = '[ $user ]($style)'
 [directory]
 style = "bg:peach fg:crust"
 format = "[ $path ]($style)"
-truncation_length = 0
-truncation_symbol = ""
+truncation_length = 3
+truncation_symbol = ".../"
 
 [git_branch]
-disabled = true
+disabled = false
 symbol = ""
-style = "bg:yellow"
-format = '[[ $symbol $branch ](fg:crust bg:yellow)]($style)'
+style = "bg:blue"
+format = '[[ $symbol $branch ](fg:crust bg:blue)]($style)'
 
 [git_status]
-disabled = true
-style = "bg:yellow"
-format = '[[($all_status$ahead_behind )](fg:crust bg:yellow)]($style)'
+disabled = false
+style = "bg:blue"
+format = '[[($all_status$ahead_behind )](fg:crust bg:blue)]($style)'
 
 [character]
 disabled = false
@@ -70,6 +83,62 @@ vimcmd_symbol = '(bold fg:green)'
 vimcmd_replace_one_symbol = '(bold fg:lavender)'
 vimcmd_replace_symbol = '(bold fg:lavender)'
 vimcmd_visual_symbol = '(bold fg:yellow)'
+
+[nodejs]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[c]
+symbol = " "
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[rust]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[golang]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[php]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[java]
+symbol = " "
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[kotlin]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[haskell]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[python]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
+
+[docker_context]
+symbol = ""
+style = "bg:sapphire"
+format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
+
+[conda]
+symbol = "  "
+style = "fg:crust bg:sapphire"
+format = '[$symbol$environment ]($style)'
+ignore_base = false
 
 [palettes.catppuccin_mocha]
 rosewater = "#f5e0dc"

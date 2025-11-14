@@ -8,6 +8,8 @@ local config = {
   check_for_updates = true,
   launch_menu = {},
 
+  enable_osc52_clipboard = true,
+
   leader = { key = "m", mods = "CTRL", timeout_milliseconds = 2000 },
   disable_default_key_bindings = true,
 
