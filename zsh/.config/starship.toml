@@ -20,6 +20,7 @@ $java\
 $kotlin\
 $haskell\
 $python\
+$terraform\
 [](fg:green)
 [╰─](bold red)\
 $character"""
@@ -139,6 +140,10 @@ symbol = "  "
 style = "fg:crust bg:sapphire"
 format = '[$symbol$environment ]($style)'
 ignore_base = false
+
+[terraform]
+style = "bg:green"
+format = '[[ $symbol($workspace) ](fg:crust bg:green)]($style)'
 
 [palettes.catppuccin_mocha]
 rosewater = "#f5e0dc"
