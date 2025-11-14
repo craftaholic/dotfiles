@@ -82,3 +82,40 @@ opt.fillchars = {
   diff = "╱",
   -- eob = " ",
 }
+
+if vim.env.SSH_CONNECTION or vim.env.SSH_TTY then
+  -- Remote SSH: Use OSC 52 for clipboard sync to local machine
+  vim.g.clipboard = {
+    name = 'OSC 52',
+    copy = {
+      ['+'] = function(lines)
+        -- Detect yank type: linewise for multiple lines, characterwise otherwise
+        local regtype = #lines > 1 and 'l' or 'c'
+
+        -- Store in vim registers with correct type
+        vim.fn.setreg('+', lines, regtype)
+        vim.fn.setreg('"', lines, regtype)
+
+        -- Send via OSC 52 to Mac clipboard
+        require('vim.ui.clipboard.osc52').copy('+')(lines)
+      end,
+      ['*'] = function(lines)
+        local regtype = #lines > 1 and 'l' or 'c'
+        vim.fn.setreg('*', lines, regtype)
+        vim.fn.setreg('"', lines, regtype)
+        require('vim.ui.clipboard.osc52').copy('*')(lines)
+      end,
+    },
+    paste = {
+      ['+'] = function()
+        return vim.fn.getreg('"')
+      end,
+      ['*'] = function()
+        return vim.fn.getreg('"')
+      end,
+    },
+  }
+else
+  -- Local: Use native system clipboard
+  vim.opt.clipboard = 'unnamedplus'
+end
