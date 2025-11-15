@@ -47,6 +47,6 @@ tasks:
           dir=${dir%/} # Remove trailing slash
           if [ -d "$dir" ] && [ "$dir" != "node_modules" ] && [ "$dir" != ".git" ]; then
             echo "Creating symlinks for $dir"
-            stow -R --target "$HOME" "$dir"
+            stow -R --target "$HOME" "$dir" 2>/dev/null || stow -R --target "$HOME" "$dir"
           fi
         done

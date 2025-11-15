@@ -40,7 +40,8 @@
     "python313Packages.cfn-lint@latest",
     "amazon-q-cli@latest",
     "pnpm@latest",
-    "starship@latest"
+    "starship@latest",
+    "nodejs@latest"
   ],
   "shell": {
     "init_hook": [
