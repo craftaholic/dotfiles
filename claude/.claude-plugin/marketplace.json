@@ -1,0 +1,167 @@
+{
+  "plugins": [
+    {
+      "id": "cloud-architecture",
+      "name": "Cloud Architecture",
+      "description": "Multi-cloud architecture patterns, security, optimization, networking, and disaster recovery",
+      "version": "1.0.0",
+      "agents": [
+        "cloud-architect"
+      ],
+      "skills": [
+        "cloud-design",
+        "cloud-security",
+        "cloud-optimization",
+        "cloud-networking",
+        "disaster-recovery"
+      ]
+    },
+    {
+      "id": "infrastructure-automation",
+      "name": "Infrastructure Automation",
+      "description": "Infrastructure as Code patterns, testing, automation, and state management",
+      "version": "1.0.0",
+      "agents": [
+        "infrastructure-specialist"
+      ],
+      "skills": [
+        "terraform-patterns",
+        "pulumi-patterns",
+        "iac-testing",
+        "iac-ci-cd",
+        "state-management"
+      ]
+    },
+    {
+      "id": "kubernetes-containers",
+      "name": "Kubernetes & Containers",
+      "description": "Kubernetes architecture, GitOps, service mesh, and container patterns",
+      "version": "1.0.0",
+      "agents": [
+        "kubernetes-specialist"
+      ],
+      "skills": [
+        "k8s-architecture",
+        "k8s-security",
+        "gitops-workflows",
+        "helm-patterns",
+        "service-mesh"
+      ]
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "description": "Metrics, logging, tracing, SLOs, and alert management",
+      "version": "1.0.0",
+      "agents": [
+        "observability-engineer"
+      ],
+      "skills": [
+        "metrics-design",
+        "logging-patterns",
+        "tracing-implementation",
+        "slo-design",
+        "alert-management"
+      ]
+    },
+    {
+      "id": "software-architecture",
+      "name": "Software Architecture",
+      "description": "Clean Architecture, DDD, Hexagonal, Microservices, and API design",
+      "version": "1.0.0",
+      "agents": [
+        "software-architect"
+      ],
+      "skills": [
+        "clean-architecture",
+        "clean-architecture-golang",
+        "clean-architecture-typescript",
+        "clean-architecture-python",
+        "ddd-patterns",
+        "hexagonal-design",
+        "microservices",
+        "api-design"
+      ]
+    },
+    {
+      "id": "backend-development",
+      "name": "Backend Development",
+      "description": "Golang, TypeScript, Python, database, and event-driven patterns",
+      "version": "1.0.0",
+      "agents": [
+        "backend-developer"
+      ],
+      "skills": [
+        "golang-patterns",
+        "typescript-patterns",
+        "python-patterns",
+        "database-optimization",
+        "event-driven"
+      ]
+    },
+    {
+      "id": "frontend-development",
+      "name": "Frontend Development",
+      "description": "React, Next.js, state management, testing, and performance",
+      "version": "1.0.0",
+      "agents": [
+        "frontend-developer"
+      ],
+      "skills": [
+        "react-patterns",
+        "nextjs-architecture",
+        "state-management",
+        "frontend-testing",
+        "frontend-performance"
+      ]
+    },
+    {
+      "id": "devops-workflows",
+      "name": "DevOps Workflows",
+      "description": "CI/CD, deployment strategies, configuration, secrets, and monitoring",
+      "version": "1.0.0",
+      "agents": [
+        "devops-engineer"
+      ],
+      "skills": [
+        "ci-cd-patterns",
+        "deployment-strategies",
+        "config-management",
+        "secret-management",
+        "infra-monitoring"
+      ]
+    },
+    {
+      "id": "security-compliance",
+      "name": "Security & Compliance",
+      "description": "Secure coding, authentication, security testing, compliance, and container security",
+      "version": "1.0.0",
+      "agents": [
+        "security-specialist"
+      ],
+      "skills": [
+        "secure-coding",
+        "auth-patterns",
+        "security-testing",
+        "compliance-frameworks",
+        "container-security"
+      ]
+    },
+    {
+      "id": "technical-leadership",
+      "name": "Technical Leadership",
+      "description": "Documentation, architecture decisions, code review, planning, and team collaboration",
+      "version": "1.0.0",
+      "agents": [
+        "tech-lead"
+      ],
+      "skills": [
+        "tech-documentation",
+        "architecture-decisions",
+        "code-review",
+        "tech-planning",
+        "team-collaboration"
+      ]
+    }
+  ]
+}
