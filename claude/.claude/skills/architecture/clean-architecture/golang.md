@@ -7,22 +7,6 @@ description: Implement Clean Architecture principles in Go to create maintainabl
 
 Implementation patterns for designing Go applications following Clean Architecture principles.
 
-## When to Use
-
-- Designing new Go applications
-- Refactoring legacy Go codebases
-- Building complex domain models in Go
-- Creating testable, maintainable Go code
-- Framework-independent Go development
-
-## Core Principles
-
-1. **Independence from Frameworks**: The architecture doesn't depend on the existence of some framework
-2. **Testability**: Business rules can be tested without UI, database, server, or frameworks
-3. **Independence from UI**: The UI can change without changing the system
-4. **Independence from Database**: The database can be changed without affecting the business rules
-5. **Independence from External Agencies**: Business rules don't know about external interfaces
-
 ## Layer Structure in Go Applications
 
 ### Core Concentric Layers
@@ -42,1785 +26,808 @@ Implementation patterns for designing Go applications following Clean Architectu
 └────────────────────────────────────────────────────┘
 ```
 
-## Implementation in Go
+## Key Concepts
 
-### 1. Enterprise Business Rules (Entities)
+### Clean Architecture Principles
 
-Domain entities in Go are typically defined as structs with methods:
+- **Dependency Inversion**: Dependencies flow from outer layers to inner layers
+- **Separation of Concerns**: Business logic is independent of frameworks, databases, and external services
+- **Testability**: Components are designed for easy testing through interfaces and dependency injection
+- **Maintainability**: Organized structure makes code easier to understand and evolve
 
-```go
-// internal/domain/entity/user.go
-package entity
+### Interface Definition Pattern
 
-import (
-    "errors"
-    "regexp"
-    "time"
-)
+In this template, interfaces are defined in `contracts.go` files within their respective packages. This pattern provides a clear location for interface definitions and makes it easy to generate mocks for testing.
 
-type User struct {
-    ID        string
-    Name      string
-    Email     string
-    CreatedAt time.Time
-}
-
-// ValidateEmail validates user email format
-func (u *User) ValidateEmail() error {
-    emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-    if !emailRegex.MatchString(u.Email) {
-        return errors.New("invalid email format")
-    }
-    return nil
-}
-
-// IsNew checks if the user is a new entity
-func (u *User) IsNew() bool {
-    return u.ID == ""
-}
-```
-
-Domain repository interfaces are defined in the domain layer:
+For example, in `internal/repo/contracts.go`:
 
 ```go
-// internal/domain/repository/user.go
-package repository
+// Package repo implements application outer layer logic. Each logic group in own file.
+package repo
 
 import (
     "context"
-
-    "github.com/example/project/internal/domain/entity"
+    "github.com/evrone/go-clean-template/internal/entity"
 )
 
-// UserRepository defines the contract for data persistence
-type User interface {
-    FindByID(ctx context.Context, id string) (*entity.User, error)
-    Save(ctx context.Context, user *entity.User) error
-    Update(ctx context.Context, user *entity.User) error
-    Delete(ctx context.Context, id string) error
-}
+//go:generate mockgen -source=contracts.go -destination=../usecase/mocks_repo_test.go -package=usecase_test
+
+type (
+    // TranslationRepo -.
+    TranslationRepo interface {
+        Store(context.Context, entity.Translation) error
+        GetHistory(context.Context) ([]entity.Translation, error)
+    }
+
+    // TranslationWebAPI -.
+    TranslationWebAPI interface {
+        Translate(entity.Translation) (entity.Translation, error)
+    }
+)
 ```
 
-### 2. Application Business Rules (Use Cases)
+Note the `go:generate` directive that automatically generates mocks for testing.
 
-In Go, use cases are typically implemented as services with interfaces:
+### Project Structure
 
-```go
-// internal/usecase/user.go
-package usecase
-
-import (
-    "context"
-    "errors"
-    "time"
-
-    "github.com/example/project/internal/domain/entity"
-    "github.com/example/project/internal/domain/repository"
-)
-
-// User defines the interface for user use cases
-type User interface {
-    GetByID(ctx context.Context, id string) (*entity.User, error)
-    Create(ctx context.Context, name, email string) (*entity.User, error)
-    Update(ctx context.Context, id, name, email string) (*entity.User, error)
-    Delete(ctx context.Context, id string) error
-}
-
-// UserUseCase implements User interface
-type UserUseCase struct {
-    repo repository.User
-}
-
-// NewUserUseCase creates a new UserUseCase instance
-func NewUserUseCase(repo repository.User) *UserUseCase {
-    return &UserUseCase{
-        repo: repo,
-    }
-}
-
-// GetByID retrieves a user by ID
-func (uc *UserUseCase) GetByID(ctx context.Context, id string) (*entity.User, error) {
-    if id == "" {
-        return nil, errors.New("user ID cannot be empty")
-    }
-
-    return uc.repo.FindByID(ctx, id)
-}
-
-// Create creates a new user
-func (uc *UserUseCase) Create(ctx context.Context, name, email string) (*entity.User, error) {
-    user := &entity.User{
-        Name:      name,
-        Email:     email,
-        CreatedAt: time.Now(),
-    }
-
-    if err := user.ValidateEmail(); err != nil {
-        return nil, err
-    }
-
-    if err := uc.repo.Save(ctx, user); err != nil {
-        return nil, err
-    }
-
-    return user, nil
-}
-
-// Update updates an existing user
-func (uc *UserUseCase) Update(ctx context.Context, id, name, email string) (*entity.User, error) {
-    user, err := uc.repo.FindByID(ctx, id)
-    if err != nil {
-        return nil, err
-    }
-
-    user.Name = name
-    user.Email = email
-
-    if err := user.ValidateEmail(); err != nil {
-        return nil, err
-    }
-
-    if err := uc.repo.Update(ctx, user); err != nil {
-        return nil, err
-    }
-
-    return user, nil
-}
-
-// Delete deletes a user by ID
-func (uc *UserUseCase) Delete(ctx context.Context, id string) error {
-    return uc.repo.Delete(ctx, id)
-}
+```
+├── cmd/app                  # Application entrypoint
+├── config                   # Configuration management
+├── internal                 # Application code not exported to other projects
+│   ├── app                  # Application startup and initialization
+│   ├── controller           # Entry points/delivery layer (HTTP, gRPC, AMQP, NATS)
+│   │   ├── http             # HTTP handlers
+│   │   ├── grpc             # gRPC handlers
+│   │   ├── amqp_rpc         # RabbitMQ RPC handlers
+│   │   └── nats_rpc         # NATS RPC handlers
+│   ├── entity               # Business domain models/entities
+│   ├── repo                 # Repository interfaces and implementations
+│   │   ├── persistent       # Database implementations
+│   │   └── webapi           # External API implementations
+│   └── usecase              # Business logic implementation
+└── pkg                      # Reusable libraries and utilities
+    ├── httpserver           # HTTP server wrapper
+    ├── grpcserver           # gRPC server wrapper
+    ├── postgres             # PostgreSQL client
+    ├── rabbitmq             # RabbitMQ client
+    └── logger               # Logging utility
 ```
 
-### 3. Interface Adapters
+### Layers
 
-In Go, adapters implement the interfaces defined in the use cases:
+1. **Entities** (`internal/entity`): Domain models and business rules
+2. **Use Cases** (`internal/usecase`): Application business logic
+3. **Interface Adapters** (`internal/repo`, `internal/controller`): Converting data between layers
+4. **Frameworks & Drivers** (`pkg`): External tools and frameworks
+
+## How to Use This Template
+
+### Creating a New Application
+
+1. Define your domain entities in `internal/entity`
+2. Define repository interfaces in `internal/repo`
+3. Implement business logic in `internal/usecase`
+4. Implement repositories in `internal/repo/{persistent|webapi}`
+5. Implement controllers in `internal/controller/{http|grpc|amqp_rpc|nats_rpc}`
+6. Wire everything together in `internal/app/app.go`
+
+### Adding New Features
+
+1. Add new entity models if needed
+2. Add repository interfaces for data access
+3. Add use case implementations for business logic
+4. Add controller methods for API endpoints
+5. Update routes in the appropriate router
+
+### Implementing Dependencies
 
 ```go
-// internal/adapter/repository/postgres/user.go
-package postgres
+// Define an interface in the inner layer
+type Repository interface {
+    Get() ([]Entity, error)
+}
 
-import (
-    "context"
-    "database/sql"
-    "errors"
-
-    "github.com/example/project/internal/domain/entity"
-)
-
-// UserRepository implements repository.User interface using PostgreSQL
-type UserRepository struct {
+// Implement the interface in the outer layer
+type PostgresRepository struct {
     db *sql.DB
 }
 
-// NewUserRepository creates a new PostgreSQL repository
-func NewUserRepository(db *sql.DB) *UserRepository {
-    return &UserRepository{
-        db: db,
-    }
+func (r *PostgresRepository) Get() ([]Entity, error) {
+    // Implementation
 }
 
-// FindByID retrieves a user from PostgreSQL by ID
-func (r *UserRepository) FindByID(ctx context.Context, id string) (*entity.User, error) {
-    query := "SELECT id, name, email, created_at FROM users WHERE id = $1"
-
-    var user entity.User
-    err := r.db.QueryRowContext(ctx, query, id).Scan(
-        &user.ID,
-        &user.Name,
-        &user.Email,
-        &user.CreatedAt,
-    )
-
-    if err == sql.ErrNoRows {
-        return nil, errors.New("user not found")
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    return &user, nil
+// Inject the dependency in the use case
+type UseCase struct {
+    repo Repository
 }
 
-// Save persists a new user to PostgreSQL
-func (r *UserRepository) Save(ctx context.Context, user *entity.User) error {
-    query := "INSERT INTO users (name, email, created_at) VALUES ($1, $2, $3) RETURNING id"
-
-    err := r.db.QueryRowContext(ctx, query, user.Name, user.Email, user.CreatedAt).Scan(&user.ID)
-    if err != nil {
-        return err
+func NewUseCase(r Repository) *UseCase {
+    return &UseCase{
+        repo: r,
     }
-
-    return nil
-}
-
-// Update updates an existing user in PostgreSQL
-func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
-    query := "UPDATE users SET name = $1, email = $2 WHERE id = $3"
-
-    result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.ID)
-    if err != nil {
-        return err
-    }
-
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        return err
-    }
-
-    if rowsAffected == 0 {
-        return errors.New("user not found")
-    }
-
-    return nil
-}
-
-// Delete removes a user from PostgreSQL
-func (r *UserRepository) Delete(ctx context.Context, id string) error {
-    query := "DELETE FROM users WHERE id = $1"
-
-    result, err := r.db.ExecContext(ctx, query, id)
-    if err != nil {
-        return err
-    }
-
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        return err
-    }
-
-    if rowsAffected == 0 {
-        return errors.New("user not found")
-    }
-
-    return nil
 }
 ```
 
-HTTP handlers for the REST API:
+## Best Practices
+
+1. **Interface Segregation**: Create small, focused interfaces
+2. **Dependency Injection**: Inject dependencies through constructors
+3. **Error Handling**: Wrap errors with context
+4. **Testability**: Design components for easy mocking and testing
+5. **Layer Isolation**: Inner layers should not depend on outer layers
+6. **Package Structure**: Group related functionality by domain, not by technical layer
+
+## Examples from the Template Repository
+
+The examples below are taken directly from the template repository, showing how the clean architecture principles are applied.
+
+### Repository Interface (contracts.go)
+
+In `internal/repo/contracts.go`:
 
 ```go
-// internal/adapter/handler/http/user.go
-package http
+// Package repo implements application outer layer logic. Each logic group in own file.
+package repo
 
 import (
-    "encoding/json"
-    "net/http"
-
-    "github.com/gorilla/mux"
-
-    "github.com/example/project/internal/usecase"
+	"context"
+	"github.com/evrone/go-clean-template/internal/entity"
 )
 
-// UserResponse is the DTO for user data
-type UserResponse struct {
-    ID        string `json:"id"`
-    Name      string `json:"name"`
-    Email     string `json:"email"`
-    CreatedAt string `json:"created_at"`
-}
+//go:generate mockgen -source=contracts.go -destination=../usecase/mocks_repo_test.go -package=usecase_test
 
-// UserHandler handles HTTP requests related to users
-type UserHandler struct {
-    userUseCase usecase.User
-}
+type (
+	// TranslationRepo -.
+	TranslationRepo interface {
+		Store(context.Context, entity.Translation) error
+		GetHistory(context.Context) ([]entity.Translation, error)
+	}
 
-// NewUserHandler creates a new UserHandler
-func NewUserHandler(userUseCase usecase.User) *UserHandler {
-    return &UserHandler{
-        userUseCase: userUseCase,
-    }
-}
-
-// GetUser handles GET requests to retrieve a user
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    id := vars["id"]
-
-    ctx := r.Context()
-    user, err := h.userUseCase.GetByID(ctx, id)
-
-    if err != nil {
-        w.WriteHeader(http.StatusNotFound)
-        json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-        return
-    }
-
-    response := UserResponse{
-        ID:        user.ID,
-        Name:      user.Name,
-        Email:     user.Email,
-        CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(response)
-}
-
-// CreateUser handles POST requests to create a user
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-    var input struct {
-        Name  string `json:"name"`
-        Email string `json:"email"`
-    }
-
-    if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload"})
-        return
-    }
-
-    ctx := r.Context()
-    user, err := h.userUseCase.Create(ctx, input.Name, input.Email)
-
-    if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-        return
-    }
-
-    response := UserResponse{
-        ID:        user.ID,
-        Name:      user.Name,
-        Email:     user.Email,
-        CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated)
-    json.NewEncoder(w).Encode(response)
-}
-
-// RegisterRoutes registers all user routes to the router
-func (h *UserHandler) RegisterRoutes(router *mux.Router) {
-    router.HandleFunc("/users/{id}", h.GetUser).Methods("GET")
-    router.HandleFunc("/users", h.CreateUser).Methods("POST")
-}
+	// TranslationWebAPI -.
+	TranslationWebAPI interface {
+		Translate(entity.Translation) (entity.Translation, error)
+	}
+)
 ```
 
-### 4. Frameworks & Drivers
+### Repository Implementation (persistent)
+
+In `internal/repo/persistent/translation_postgres.go`:
 
 ```go
-// internal/infrastructure/database/postgres.go
-package database
+package persistent
 
 import (
-    "database/sql"
-    "fmt"
-    "log"
+	"context"
+	"fmt"
 
-    _ "github.com/lib/pq"
+	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/pkg/postgres"
 )
 
-// PostgresConfig contains postgres connection configuration
-type PostgresConfig struct {
-    Host     string
-    Port     string
-    User     string
-    Password string
-    DBName   string
-    SSLMode  string
+// TranslationRepo -.
+type TranslationRepo struct {
+	*postgres.Postgres
 }
 
-// NewPostgresConnection creates a new postgres database connection
-func NewPostgresConnection(config PostgresConfig) (*sql.DB, error) {
-    dsn := fmt.Sprintf(
-        "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-        config.Host, config.Port, config.User, config.Password, config.DBName, config.SSLMode,
-    )
+// New -.
+func New(pg *postgres.Postgres) *TranslationRepo {
+	return &TranslationRepo{pg}
+}
 
-    db, err := sql.Open("postgres", dsn)
-    if err != nil {
-        return nil, fmt.Errorf("failed to open database connection: %w", err)
-    }
+// GetHistory -.
+func (r *TranslationRepo) GetHistory(ctx context.Context) ([]entity.Translation, error) {
+	sql, _, err := r.Builder.
+		Select("source, destination, original, translation").
+		From("history").
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("TranslationRepo - GetHistory - r.Builder: %w", err)
+	}
 
-    if err := db.Ping(); err != nil {
-        return nil, fmt.Errorf("failed to ping database: %w", err)
-    }
+	rows, err := r.Pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("TranslationRepo - GetHistory - r.Pool.Query: %w", err)
+	}
+	defer rows.Close()
 
-    log.Println("Connected to PostgreSQL database")
-    return db, nil
+	entities := make([]entity.Translation, 0, _defaultEntityCap)
+
+	for rows.Next() {
+		e := entity.Translation{}
+
+		err = rows.Scan(&e.Source, &e.Destination, &e.Original, &e.Translation)
+		if err != nil {
+			return nil, fmt.Errorf("TranslationRepo - GetHistory - rows.Scan: %w", err)
+		}
+
+		entities = append(entities, e)
+	}
+
+	return entities, nil
 }
 ```
 
+### Use Case Implementation
+
+In `internal/usecase/translation/translation.go`:
+
 ```go
-// internal/infrastructure/server/http.go
-package server
+package translation
 
 import (
-    "context"
-    "log"
-    "net/http"
-    "time"
+	"context"
+	"fmt"
 
-    "github.com/gorilla/mux"
+	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/repo"
 )
 
-// HTTPServer represents the HTTP server
-type HTTPServer struct {
-    server *http.Server
-    router *mux.Router
+// UseCase -.
+type UseCase struct {
+	repo   repo.TranslationRepo
+	webAPI repo.TranslationWebAPI
 }
 
-// NewHTTPServer creates a new HTTP server
-func NewHTTPServer(port string) *HTTPServer {
-    router := mux.NewRouter()
-
-    return &HTTPServer{
-        server: &http.Server{
-            Addr:         ":" + port,
-            Handler:      router,
-            ReadTimeout:  15 * time.Second,
-            WriteTimeout: 15 * time.Second,
-            IdleTimeout:  60 * time.Second,
-        },
-        router: router,
-    }
+// New -.
+func New(r repo.TranslationRepo, w repo.TranslationWebAPI) *UseCase {
+	return &UseCase{
+		repo:   r,
+		webAPI: w,
+	}
 }
 
-// Router returns the router instance
-func (s *HTTPServer) Router() *mux.Router {
-    return s.router
-}
+// Translate -.
+func (uc *UseCase) Translate(ctx context.Context, t entity.Translation) (entity.Translation, error) {
+	translation, err := uc.webAPI.Translate(t)
+	if err != nil {
+		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.webAPI.Translate: %w", err)
+	}
 
-// Start starts the HTTP server
-func (s *HTTPServer) Start() {
-    go func() {
-        log.Printf("Starting HTTP server on %s", s.server.Addr)
-        if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-            log.Fatalf("HTTP server error: %v", err)
-        }
-    }()
-}
+	err = uc.repo.Store(ctx, translation)
+	if err != nil {
+		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.repo.Store: %w", err)
+	}
 
-// Shutdown gracefully shuts down the HTTP server
-func (s *HTTPServer) Shutdown(ctx context.Context) error {
-    log.Println("Shutting down HTTP server...")
-    return s.server.Shutdown(ctx)
+	return translation, nil
 }
 ```
 
-## Dependency Injection with Bootstrap Pattern
+### HTTP Controller and Router
 
-In Clean Architecture, proper dependency injection is crucial for maintainability and testability. A well-designed bootstrap pattern provides a structured way to initialize and wire dependencies while adhering to the dependency inversion principle.
-
-### Interface-Based Bootstrap Approach
-
-The bootstrap pattern should work with interfaces, not concrete implementations, to maintain proper dependency inversion:
+In `internal/controller/http/v1/router.go`:
 
 ```go
-// internal/bootstrap/container.go
-package bootstrap
+package v1
 
 import (
-    "database/sql"
-
-    "github.com/example/project/internal/interfaces"
-    "github.com/example/project/internal/adapter/http"
+	"github.com/evrone/go-clean-template/internal/usecase"
+	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
-// Container holds all application dependencies as interfaces
-type Container struct {
-    // Infrastructure
-    DB *sql.DB
+// NewTranslationRoutes -.
+func NewTranslationRoutes(apiV1Group fiber.Router, t usecase.Translation, l logger.Interface) {
+	r := &V1{t: t, l: l, v: validator.New(validator.WithRequiredStructEnabled())}
 
-    // Repositories (interfaces)
-    UserRepository interfaces.UserRepository
+	translationGroup := apiV1Group.Group("/translation")
 
-    // Use cases (interfaces)
-    UserUseCase interfaces.UserUseCase
-
-    // HTTP handlers
-    UserHandler *http.UserHandler
-
-    // Logger
-    Logger interfaces.Logger
-
-    // Server
-    Server interfaces.HTTPServer
-}
-
-// Bootstrap initializes all application dependencies
-func Bootstrap() (*Container, error) {
-    // Initialize the logger first
-    logger, err := initLogger()
-    if err != nil {
-        return nil, err
-    }
-
-    logger.Info("Bootstrapping application")
-
-    // Initialize the container with the logger
-    container := &Container{
-        Logger: logger,
-    }
-
-    // Load configuration
-    config, err := initConfig()
-    if err != nil {
-        return nil, err
-    }
-
-    // Initialize database connection
-    db, err := initDatabase(config.Database, logger)
-    if err != nil {
-        return nil, err
-    }
-    container.DB = db
-
-    // Initialize repositories
-    if err := initRepositories(container); err != nil {
-        return nil, err
-    }
-
-    // Initialize use cases
-    if err := initUseCases(container); err != nil {
-        return nil, err
-    }
-
-    // Initialize HTTP handlers
-    if err := initHTTPHandlers(container); err != nil {
-        return nil, err
-    }
-
-    // Initialize server
-    server, err := initHTTPServer(config.Server, logger)
-    if err != nil {
-        return nil, err
-    }
-    container.Server = server
-
-    logger.Info("Application bootstrapped successfully")
-    return container, nil
-}
-
-// Shutdown gracefully shuts down all services
-func (c *Container) Shutdown() error {
-    c.Logger.Info("Shutting down application")
-
-    // Close database connection
-    if c.DB != nil {
-        if err := c.DB.Close(); err != nil {
-            c.Logger.Error("Error closing database", "error", err)
-            return err
-        }
-    }
-
-    // Additional shutdown logic for other components
-
-    c.Logger.Info("Application shutdown complete")
-    return nil
+	{
+		translationGroup.Get("/history", r.history)
+		translationGroup.Post("/do-translate", r.doTranslate)
+	}
 }
 ```
 
-### Modular Initialization Functions
-
-Break down initialization logic into separate functions for better organization:
+In `internal/controller/http/v1/translation.go`:
 
 ```go
-// internal/bootstrap/init.go
-package bootstrap
+// @Summary     Translate
+// @Description Translate a text
+// @ID          do-translate
+// @Tags  	    translation
+// @Accept      json
+// @Produce     json
+// @Param       request body request.Translate true "Set up translation"
+// @Success     200 {object} entity.Translation
+// @Failure     400 {object} response.Error
+// @Failure     500 {object} response.Error
+// @Router      /translation/do-translate [post]
+func (r *V1) doTranslate(ctx *fiber.Ctx) error {
+	var body request.Translate
 
-import (
-    "database/sql"
+	if err := ctx.BodyParser(&body); err != nil {
+		r.l.Error(err, "http - v1 - doTranslate")
+		return errorResponse(ctx, http.StatusBadRequest, "invalid request body")
+	}
 
-    "github.com/example/project/internal/adapter/repository/postgres"
-    "github.com/example/project/internal/adapter/handler/http"
-    "github.com/example/project/internal/infrastructure/database"
-    "github.com/example/project/internal/infrastructure/server"
-    "github.com/example/project/internal/infrastructure/logger"
-    "github.com/example/project/internal/usecase"
-    "github.com/example/project/internal/shared/config"
-)
+	if err := r.v.Struct(body); err != nil {
+		r.l.Error(err, "http - v1 - doTranslate")
+		return errorResponse(ctx, http.StatusBadRequest, "invalid request body")
+	}
 
-// Initialize logger
-func initLogger() (interfaces.Logger, error) {
-    return logger.NewZapLogger(), nil
-}
+	translation, err := r.t.Translate(
+		ctx.UserContext(),
+		entity.Translation{
+			Source:      body.Source,
+			Destination: body.Destination,
+			Original:    body.Original,
+		},
+	)
+	if err != nil {
+		r.l.Error(err, "http - v1 - doTranslate")
+		return errorResponse(ctx, http.StatusInternalServerError, "translation service problems")
+	}
 
-// Initialize configuration
-func initConfig() (*config.Config, error) {
-    return config.Load()
-}
-
-// Initialize database connection
-func initDatabase(dbConfig config.DatabaseConfig, logger interfaces.Logger) (*sql.DB, error) {
-    logger.Info("Connecting to database", "host", dbConfig.Host)
-
-    db, err := database.NewPostgresConnection(database.PostgresConfig{
-        Host:     dbConfig.Host,
-        Port:     dbConfig.Port,
-        User:     dbConfig.User,
-        Password: dbConfig.Password,
-        DBName:   dbConfig.Name,
-        SSLMode:  dbConfig.SSLMode,
-    })
-
-    if err != nil {
-        logger.Error("Failed to connect to database", "error", err)
-        return nil, err
-    }
-
-    logger.Info("Successfully connected to database")
-    return db, nil
-}
-
-// Initialize repositories
-func initRepositories(c *Container) error {
-    // User repository
-    c.UserRepository = postgres.NewUserRepository(c.DB)
-    return nil
-}
-
-// Initialize use cases
-func initUseCases(c *Container) error {
-    // User use case
-    c.UserUseCase = usecase.NewUserUseCase(c.UserRepository)
-    return nil
-}
-
-// Initialize HTTP handlers
-func initHTTPHandlers(c *Container) error {
-    // User handler
-    c.UserHandler = http.NewUserHandler(c.UserUseCase)
-    return nil
-}
-
-// Initialize HTTP server
-func initHTTPServer(serverConfig config.ServerConfig, logger interfaces.Logger) (interfaces.HTTPServer, error) {
-    return server.NewHTTPServer(serverConfig.Port), nil
+	return ctx.Status(http.StatusOK).JSON(translation)
 }
 ```
 
-## Main Application Wiring with Bootstrap
+### Request/Response Models
 
-Using the bootstrap pattern in the main entry point:
+In `internal/controller/http/v1/request/translate.go`:
 
 ```go
-// cmd/api/main.go
-package main
+package request
 
-import (
-    "context"
-    "os"
-    "os/signal"
-    "syscall"
-    "time"
-
-    "github.com/example/project/internal/api/route"
-    "github.com/example/project/internal/bootstrap"
-)
-
-func main() {
-    // Bootstrap the application
-    container, err := bootstrap.Bootstrap()
-    if err != nil {
-        panic(err)
-    }
-
-    // Ensure proper shutdown
-    defer func() {
-        if err := container.Shutdown(); err != nil {
-            container.Logger.Error("Error during shutdown", "error", err)
-        }
-    }()
-
-    // Set up HTTP routes using the container
-    router := route.Setup(container)
-
-    // Configure the HTTP server with the router
-    server := container.Server
-    server.SetHandler(router)
-
-    // Start the server in a goroutine
-    go func() {
-        container.Logger.Info("Starting HTTP server", "port", server.Port())
-        if err := server.Start(); err != nil {
-            container.Logger.Error("Server failed", "error", err)
-        }
-    }()
-
-    // Wait for interrupt signal to gracefully shutdown
-    quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
-    container.Logger.Info("Shutting down server...")
-
-    // Create a deadline for server shutdown
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
-
-    // Shut down the server
-    if err := server.Shutdown(ctx); err != nil {
-        container.Logger.Fatal("Server forced to shutdown", "error", err)
-    }
+type Translate struct {
+	Source      string `json:"source"       validate:"required"  example:"auto"`
+	Destination string `json:"destination"  validate:"required"  example:"en"`
+	Original    string `json:"original"     validate:"required"  example:"текст для перевода"`
 }
 ```
 
-## Folder Structure for Go Clean Architecture
+## Common Patterns
 
-```
-project/
-├── cmd/
-│   └── api/
-│       └── main.go          // Application entry point
-├── internal/                // All private application code
-│   ├── domain/              // Enterprise Business Rules
-│   │   ├── entity/          // Domain models
-│   │   │   └── user.go
-│   │   └── repository/      // Repository interfaces
-│   │       └── user.go
-│   ├── usecase/             // Application Business Rules
-│   │   └── user.go          // Use cases for user domain
-│   ├── adapter/             // Interface Adapters
-│   │   ├── handler/         // HTTP/gRPC handlers
-│   │   │   ├── http/
-│   │   │   │   └── user.go
-│   │   │   └── grpc/
-│   │   │       └── user.go
-│   │   ├── presenter/       // View presenters
-│   │   │   └── user.go
-│   │   └── repository/      // Repository implementations
-│   │       ├── postgres/
-│   │       │   └── user.go
-│   │       └── mongo/
-│   │           └── user.go
-│   └── infrastructure/      // Frameworks & Drivers
-│       ├── database/        // Database connections
-│       │   ├── postgres.go
-│       │   └── mongo.go
-│       ├── server/          // Server configurations
-│       │   ├── http.go
-│       │   └── grpc.go
-│       └── config/          // Application configuration
-│           └── config.go
-└── pkg/                     // Shared utilities (exported)
-    ├── logger/
-    │   └── logger.go
-    └── utils/
-        └── utils.go
-```
+1. **Request/Response Mapping**: Convert between API DTOs and domain entities
+2. **Error Wrapping**: Add context to errors as they pass through layers
+3. **Dependency Injection**: Pass dependencies through constructors
+4. **Interface-based Design**: Define behavior through interfaces
+5. **Context Propagation**: Pass context.Context through all layers
 
-## Go-Specific Testing Strategy
+## Logger Usage Pattern
+
+The template uses a structured logger based on [zerolog](https://github.com/rs/zerolog) with a custom interface wrapper. The logger is created at application startup and injected into components that need logging capabilities.
+
+### Logger Interface
+
+In `pkg/logger/logger.go`:
 
 ```go
-// application/usecases/user_usecase_test.go
-package usecases_test
-
-import (
-    "context"
-    "errors"
-    "testing"
-    "time"
-
-    "app/domain/entities"
-    "app/application/usecases"
-)
-
-// MockUserRepository implements UserRepository for testing
-type MockUserRepository struct {
-    users map[string]*entities.User
-}
-
-func NewMockUserRepository() *MockUserRepository {
-    return &MockUserRepository{
-        users: make(map[string]*entities.User),
-    }
-}
-
-func (m *MockUserRepository) FindByID(ctx context.Context, id string) (*entities.User, error) {
-    user, exists := m.users[id]
-    if !exists {
-        return nil, errors.New("user not found")
-    }
-    return user, nil
-}
-
-func (m *MockUserRepository) Save(ctx context.Context, user *entities.User) error {
-    // Simulate ID generation
-    user.ID = "test-id"
-    m.users[user.ID] = user
-    return nil
-}
-
-func (m *MockUserRepository) Update(ctx context.Context, user *entities.User) error {
-    if _, exists := m.users[user.ID]; !exists {
-        return errors.New("user not found")
-    }
-    m.users[user.ID] = user
-    return nil
-}
-
-func (m *MockUserRepository) Delete(ctx context.Context, id string) error {
-    if _, exists := m.users[id]; !exists {
-        return errors.New("user not found")
-    }
-    delete(m.users, id)
-    return nil
-}
-
-func TestUserUseCase_GetUser(t *testing.T) {
-    repo := NewMockUserRepository()
-    useCase := usecases.NewUserUseCase(repo)
-    ctx := context.Background()
-
-    // Test with non-existing user
-    _, err := useCase.GetUser(ctx, "non-existing-id")
-    if err == nil {
-        t.Fatalf("Expected error for non-existing user, got nil")
-    }
-
-    // Create a test user
-    testUser := &entities.User{
-        ID:        "test-id",
-        Name:      "Test User",
-        Email:     "test@example.com",
-        CreatedAt: time.Now(),
-    }
-    repo.users["test-id"] = testUser
-
-    // Test with existing user
-    user, err := useCase.GetUser(ctx, "test-id")
-    if err != nil {
-        t.Fatalf("Expected no error, got %v", err)
-    }
-
-    if user.ID != testUser.ID || user.Name != testUser.Name || user.Email != testUser.Email {
-        t.Errorf("Expected user %+v, got %+v", testUser, user)
-    }
-}
-
-func TestUserUseCase_CreateUser(t *testing.T) {
-    repo := NewMockUserRepository()
-    useCase := usecases.NewUserUseCase(repo)
-    ctx := context.Background()
-
-    // Test with invalid email
-    _, err := useCase.CreateUser(ctx, "Test User", "invalid-email")
-    if err == nil {
-        t.Fatalf("Expected error for invalid email, got nil")
-    }
-
-    // Test with valid data
-    user, err := useCase.CreateUser(ctx, "Test User", "test@example.com")
-    if err != nil {
-        t.Fatalf("Expected no error, got %v", err)
-    }
-
-    if user.ID == "" || user.Name != "Test User" || user.Email != "test@example.com" {
-        t.Errorf("User was not created correctly: %+v", user)
-    }
+// Interface -.
+type Interface interface {
+    Debug(message interface{}, args ...interface{})
+    Info(message string, args ...interface{})
+    Warn(message string, args ...interface{})
+    Error(message interface{}, args ...interface{})
+    Fatal(message interface{}, args ...interface{})
 }
 ```
 
-## Common Go Patterns in Clean Architecture
+### Logger Initialization
 
-### 1. Dependency Injection
-
-Go typically uses constructor injection:
+In `internal/app/app.go`:
 
 ```go
-// Constructor injection
-func NewUserUseCase(repo UserRepository) *UserUseCase {
-    return &UserUseCase{repo: repo}
+// Run creates objects via constructors.
+func Run(cfg *config.Config) {
+    l := logger.New(cfg.Log.Level)
+
+    // ... rest of the application setup
 }
 ```
 
-### 2. Error Handling
+### Logger Usage in Components
 
-Go uses explicit error handling:
+The logger is injected into components at creation time:
 
 ```go
-// Error checking pattern
-user, err := useCase.GetUser(ctx, id)
+// Controller example
+type V1 struct {
+    t Translation
+    l logger.Interface
+    v *validator.Validate
+}
+
+// New returns a new instance of the V1 router.
+func NewTranslationRoutes(handler fiber.Router, t Translation, l logger.Interface) {
+    v := validator.New()
+    r := &V1{t, l, v}
+
+    // ... router setup
+}
+
+// Usage within a controller method
+func (r *V1) doTranslate(ctx *fiber.Ctx) error {
+    // ...
+    if err := ctx.BodyParser(&body); err != nil {
+        r.l.Error(err, "http - v1 - doTranslate") // <-- Logger usage
+        return errorResponse(ctx, http.StatusBadRequest, "invalid request body")
+    }
+    // ...
+}
+```
+
+### Error Logging Pattern
+
+The template follows a consistent pattern for error logging:
+
+1. Log the error with its context
+2. Return a formatted error to the caller
+
+```go
 if err != nil {
-    // Handle error
-    return err
-}
-
-// Use user...
-```
-
-### 3. Context Passing
-
-Go passes request context through the layers:
-
-```go
-// Context passing
-func (uc *UserUseCase) GetUser(ctx context.Context, id string) (*entities.User, error) {
-    // Pass context to repository
-    return uc.repo.FindByID(ctx, id)
+    r.l.Error(err, "component - function - operation")
+    return errorResponse(ctx, statusCode, "user-friendly message")
 }
 ```
 
-### 4. Interfaces for Dependency Inversion
+### Limitations and Enhancement Opportunities
 
-Go uses interfaces to abstract dependencies:
+The default logger implementation does not support context-aware logging with request IDs or trace IDs propagated through different layers. This is an area where the template could be enhanced.
 
-```go
-// Define interface in the layer that uses it
-type UserRepository interface {
-    FindByID(ctx context.Context, id string) (*entities.User, error)
-    // Other methods...
-}
+#### Recommended Approach: Context-Embedded Logger
 
-// Implementation in the infrastructure layer
-type PostgresUserRepository struct {
-    // Implementation details...
-}
-```
-
-## Go-Specific Clean Architecture Benefits
-
-1. **Clear separation of concerns**: Go's package system works well with Clean Architecture
-2. **Testability**: Easy to mock interfaces for unit testing
-3. **Maintainability**: Clean separation reduces coupling
-4. **Adaptability**: Easy to replace implementations (e.g., database, framework)
-5. **Scalability**: Go's concurrency model works well with the layered approach
-
-## Common Challenges and Solutions in Go
-
-### 1. Circular Dependencies
-
-**Problem**: Circular imports between packages
-**Solution**: Define interfaces in the using package
-
-### 2. Over-engineering
-
-**Problem**: Too many layers/interfaces for simple applications
-**Solution**: Right-size the architecture based on application complexity
-
-### 3. Error Propagation
-
-**Problem**: Error handling across multiple layers
-**Solution**: Use error wrapping with context
-
-### 4. Domain vs. Data Transfer Objects
-
-**Problem**: Converting between domain and DTOs
-**Solution**: Use mappers/transformers to convert between representations
-
-### 5. Testing Database Adapters
-
-**Problem**: Testing repositories with real databases
-**Solution**: Use testcontainers-go for integration tests with ephemeral databases
-
-## Structured Logging in Clean Architecture
-
-Proper logging is a critical aspect of any production-ready application. In Clean Architecture, logging should be:
-1. Treated as a cross-cutting concern
-2. Abstracted behind interfaces
-3. Structured and consistent
-
-### Logger Interface Design
-
-Define a domain-agnostic logging interface:
+A recommended approach is to embed the logger in the context and retrieve it in each layer. This approach is cleaner and more idiomatic in Go applications:
 
 ```go
-// internal/interfaces/logger.go
-package interfaces
+// In pkg/logger/logger.go
 
-import "context"
-
-// Standard field keys for consistent structured logging
-const (
-    // Context metadata
-    FieldTraceID    = "trace_id"
-    FieldRequestID  = "request_id"
-    FieldUserID     = "user_id"
-
-    // Component identification
-    FieldComponent  = "component"
-    FieldModule     = "module"
-    FieldFunction   = "function"
-
-    // Operation context
-    FieldOperation  = "operation"
-    FieldDuration   = "duration_ms"
-
-    // Error information
-    FieldError      = "error"
-    FieldErrorCode  = "error_code"
-)
-
-// Logger defines the interface for logging operations
-type Logger interface {
-    // Context operations
-    WithContext(ctx context.Context) Logger
-
-    // Field operations
-    WithFields(fields map[string]interface{}) Logger
-    WithField(key string, value interface{}) Logger
-    WithError(err error) Logger
-    WithComponent(component string) Logger
-
-    // Logging methods
-    Debug(msg string, args ...interface{})
-    Info(msg string, args ...interface{})
-    Warn(msg string, args ...interface{})
-    Error(msg string, args ...interface{})
-    Fatal(msg string, args ...interface{})
-
-    // Operation timing
-    TimeOperation(operation string) Timer
-}
-
-// Timer allows measuring and logging operation durations
-type Timer interface {
-    End(level string, msg string, args ...interface{})
-    EndDebug(msg string, args ...interface{})
-    EndInfo(msg string, args ...interface{})
-    EndError(msg string, args ...interface{})
-}
-```
-
-### Logger Implementation with Zap
-
-Implement the Logger interface using Zap:
-
-```go
-// internal/infrastructure/logger/zap_logger.go
 package logger
 
 import (
     "context"
-    "time"
 
-    "github.com/example/project/internal/interfaces"
     "go.uber.org/zap"
-    "go.uber.org/zap/zapcore"
 )
 
-// Key for storing/retrieving logger from context
-type loggerContextKey struct{}
+// ctxKey is used as the key for storing logger in context
+type ctxKey struct{}
 
-// ZapLogger implements Logger interface using Zap
-type ZapLogger struct {
+// Interface defines the logger methods
+type Interface interface {
+    // Standard logging methods
+    Debug(msg string, fields ...any)
+    Info(msg string, fields ...any)
+    Warn(msg string, fields ...any)
+    Error(msg string, fields ...any)
+    Fatal(msg string, fields ...any)
+
+    // Context methods
+    FromCtx(ctx context.Context) Interface
+    WithCtx(ctx context.Context) context.Context
+    WithFields(fields ...any) Interface
+}
+
+// Logger implementation using zap
+type Logger struct {
     logger *zap.Logger
-    fields map[string]interface{}
 }
 
-// NewZapLogger creates a new ZapLogger instance
-func NewZapLogger() interfaces.Logger {
-    // Create logger configuration
-    config := zap.NewProductionConfig()
+var BaseLogger Interface
 
-    // Customize encoding
-    config.EncoderConfig.TimeKey = "timestamp"
-    config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-
-    // Create logger
-    zapLogger, err := config.Build(
-        zap.AddCallerSkip(1),
-        zap.AddStacktrace(zapcore.ErrorLevel),
-    )
-    if err != nil {
-        panic(err)
+// FromCtx extracts the logger from context
+func (l *Logger) FromCtx(ctx context.Context) Interface {
+    if logger, ok := ctx.Value(ctxKey{}).(*Logger); ok {
+        return logger
     }
-
-    return &ZapLogger{
-        logger: zapLogger,
-        fields: make(map[string]interface{}),
-    }
-}
-
-// WithContext extracts logger from context or creates a new one with request metadata
-func (l *ZapLogger) WithContext(ctx context.Context) interfaces.Logger {
-    if ctx == nil {
-        return l
-    }
-
-    // Check if logger already exists in context
-    if ctxLogger, ok := ctx.Value(loggerContextKey{}).(*ZapLogger); ok {
-        return ctxLogger
-    }
-
-    // Extract request ID from context if available
-    reqID := extractRequestID(ctx)
-    if reqID != "" {
-        return l.WithField(interfaces.FieldRequestID, reqID)
-    }
-
+    // Return base logger if none in context
     return l
 }
 
-// WithFields adds multiple fields to logger
-func (l *ZapLogger) WithFields(fields map[string]interface{}) interfaces.Logger {
-    // Create a new logger with merged fields
-    newFields := make(map[string]interface{}, len(l.fields)+len(fields))
-
-    // Copy existing fields
-    for k, v := range l.fields {
-        newFields[k] = v
-    }
-
-    // Add new fields
-    for k, v := range fields {
-        newFields[k] = v
-    }
-
-    return &ZapLogger{
-        logger: l.logger,
-        fields: newFields,
-    }
+// WithCtx creates a new context containing the logger
+func (l *Logger) WithCtx(ctx context.Context) context.Context {
+    return context.WithValue(ctx, ctxKey{}, l)
 }
 
-// WithField adds a single field to logger
-func (l *ZapLogger) WithField(key string, value interface{}) interfaces.Logger {
-    return l.WithFields(map[string]interface{}{key: value})
+// WithFields returns a new logger with the specified fields
+func (l *Logger) WithFields(fields ...any) Interface {
+    // Add fields to the logger using zap
+    sugar := l.logger.Sugar().With(fields...)
+    return &Logger{logger: sugar.Desugar()}
 }
+```
 
-// WithError adds error information to logger
-func (l *ZapLogger) WithError(err error) interfaces.Logger {
-    if err == nil {
-        return l
-    }
-    return l.WithField(interfaces.FieldError, err.Error())
-}
+#### Middleware Implementation
 
-// WithComponent adds component name to logger
-func (l *ZapLogger) WithComponent(component string) interfaces.Logger {
-    return l.WithField(interfaces.FieldComponent, component)
-}
+The logger is attached to the context in HTTP middleware:
 
-// getZapFields converts fields map to zap fields
-func (l *ZapLogger) getZapFields() []zap.Field {
-    zapFields := make([]zap.Field, 0, len(l.fields))
-    for k, v := range l.fields {
-        zapFields = append(zapFields, zap.Any(k, v))
-    }
-    return zapFields
-}
+```go
+// In internal/controller/http/middleware/logging.go
 
-// Debug logs at debug level
-func (l *ZapLogger) Debug(msg string, args ...interface{}) {
-    fields := l.processArgs(args...)
-    l.logger.Debug(msg, fields...)
-}
+func LoggingMiddleware(l logger.Interface) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        // Generate request ID
+        requestID := uuid.New().String()
+        c.Set("X-Request-ID", requestID)
 
-// Info logs at info level
-func (l *ZapLogger) Info(msg string, args ...interface{}) {
-    fields := l.processArgs(args...)
-    l.logger.Info(msg, fields...)
-}
+        // Create a logger with request fields
+        reqLogger := l.WithFields(
+            "request_id", requestID,
+            "method", c.Method(),
+            "path", c.Path(),
+            "ip", c.IP(),
+        )
 
-// Warn logs at warn level
-func (l *ZapLogger) Warn(msg string, args ...interface{}) {
-    fields := l.processArgs(args...)
-    l.logger.Warn(msg, fields...)
-}
+        // Store logger in context
+        ctx := reqLogger.WithCtx(c.UserContext())
+        c.SetUserContext(ctx)
 
-// Error logs at error level
-func (l *ZapLogger) Error(msg string, args ...interface{}) {
-    fields := l.processArgs(args...)
-    l.logger.Error(msg, fields...)
-}
+        // Log the request
+        reqLogger.Info("Incoming request")
 
-// Fatal logs at fatal level and terminates the program
-func (l *ZapLogger) Fatal(msg string, args ...interface{}) {
-    fields := l.processArgs(args...)
-    l.logger.Fatal(msg, fields...)
-}
+        // Continue with request processing
+        err := c.Next()
 
-// TimeOperation starts timing an operation
-func (l *ZapLogger) TimeOperation(operation string) interfaces.Timer {
-    return &zapTimer{
-        logger:    l,
-        operation: operation,
-        startTime: time.Now(),
+        // Log the response
+        reqLogger.Info("Request completed",
+            "status", c.Response().StatusCode(),
+            "duration_ms", time.Since(start).Milliseconds(),
+        )
+
+        return err
     }
 }
+```
 
-// processArgs converts variable args to zap fields
-func (l *ZapLogger) processArgs(args ...interface{}) []zap.Field {
-    if len(args) == 0 {
-        return l.getZapFields()
+#### Usage in Controllers
+
+```go
+func (r *V1) doTranslate(ctx *fiber.Ctx) error {
+    // Extract logger from context
+    logger := BaseLogger.FromCtx(ctx.UserContext())
+
+    var body request.Translate
+    if err := ctx.BodyParser(&body); err != nil {
+        logger.Error("Failed to parse request body",
+            "error", err.Error(),
+            "handler", "doTranslate",
+        )
+        return errorResponse(ctx, http.StatusBadRequest, "invalid request body")
     }
 
-    // Start with existing fields
-    fields := l.getZapFields()
+    // Pass context with logger to downstream services
+    translation, err := r.t.Translate(ctx.UserContext(), entity.Translation{
+        Source:      body.Source,
+        Destination: body.Destination,
+        Original:    body.Original,
+    })
 
-    // Process additional fields
-    for i := 0; i < len(args); i += 2 {
-        if i+1 < len(args) {
-            key, ok := args[i].(string)
-            if !ok {
-                key = "unknown_key"
-            }
-            fields = append(fields, zap.Any(key, args[i+1]))
-        }
+    if err != nil {
+        logger.Error("Translation service error",
+            "error", err.Error(),
+            "handler", "doTranslate",
+        )
+        return errorResponse(ctx, http.StatusInternalServerError, "translation service problems")
     }
 
-    return fields
+    return ctx.Status(http.StatusOK).JSON(translation)
 }
+```
 
-// zapTimer implements Timer interface
-type zapTimer struct {
-    logger    *ZapLogger
-    operation string
-    startTime time.Time
-}
+#### Usage in Use Cases/Services
 
-// End logs the operation duration with the specified level
-func (t *zapTimer) End(level string, msg string, args ...interface{}) {
-    duration := time.Since(t.startTime)
+```go
+func (uc *UseCase) Translate(ctx context.Context, t entity.Translation) (entity.Translation, error) {
+    // Extract logger from context
+    logger := BaseLogger.FromCtx(ctx)
 
-    // Prepare fields
-    fields := append(
-        []interface{}{
-            interfaces.FieldOperation, t.operation,
-            interfaces.FieldDuration, duration.Milliseconds(),
-        },
-        args...,
+    logger.Debug("Translating text",
+        "source", t.Source,
+        "destination", t.Destination,
+        "length", len(t.Original),
     )
 
-    switch level {
-    case "debug":
-        t.logger.Debug(msg, fields...)
-    case "info":
-        t.logger.Info(msg, fields...)
-    case "warn":
-        t.logger.Warn(msg, fields...)
-    case "error":
-        t.logger.Error(msg, fields...)
-    default:
-        t.logger.Info(msg, fields...)
+    translation, err := uc.webAPI.Translate(t)
+    if err != nil {
+        logger.Error("Translation API failed",
+            "error", err.Error(),
+            "source", t.Source,
+            "destination", t.Destination,
+        )
+        return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - webAPI.Translate: %w", err)
     }
-}
 
-// EndDebug ends timer with debug level
-func (t *zapTimer) EndDebug(msg string, args ...interface{}) {
-    t.End("debug", msg, args...)
-}
-
-// EndInfo ends timer with info level
-func (t *zapTimer) EndInfo(msg string, args ...interface{}) {
-    t.End("info", msg, args...)
-}
-
-// EndError ends timer with error level
-func (t *zapTimer) EndError(msg string, args ...interface{}) {
-    t.End("error", msg, args...)
-}
-
-// Helper function to extract request ID from context
-func extractRequestID(ctx context.Context) string {
-    // Implementation depends on your context structure
-    // Example for a simple request ID:
-    if reqID, ok := ctx.Value("request_id").(string); ok {
-        return reqID
+    err = uc.repo.Store(ctx, translation)
+    if err != nil {
+        logger.Error("Failed to store translation",
+            "error", err.Error(),
+        )
+        return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - repo.Store: %w", err)
     }
-    return ""
-}
-```
 
-### Using the Logger Across Layers
-
-#### 1. Repository Layer
-
-```go
-// internal/adapter/repository/postgres/user_repository.go
-func (r *UserRepository) FindByID(ctx context.Context, id string) (*entity.User, error) {
-    logger := r.logger.WithContext(ctx).WithFields(map[string]interface{}{
-        interfaces.FieldComponent: "repository",
-        interfaces.FieldModule:    "user",
-        interfaces.FieldFunction:  "FindByID",
-        "user_id":                 id,
-    })
-
-    logger.Debug("Finding user by ID")
-
-    timer := logger.TimeOperation("db_query")
-
-    query := "SELECT id, name, email, created_at FROM users WHERE id = $1"
-    var user entity.User
-    err := r.db.QueryRowContext(ctx, query, id).Scan(
-        &user.ID,
-        &user.Name,
-        &user.Email,
-        &user.CreatedAt,
+    logger.Info("Translation successful",
+        "source", t.Source,
+        "destination", t.Destination,
     )
 
-    if err == sql.ErrNoRows {
-        timer.EndInfo("User not found")
-        return nil, errors.New("user not found")
-    }
-
-    if err != nil {
-        timer.EndError("Database query failed", "error", err)
-        return nil, err
-    }
-
-    timer.EndDebug("User found")
-    return &user, nil
+    return translation, nil
 }
 ```
 
-#### 2. Use Case Layer
+#### Benefits of this Approach:
+
+1. **Automatic Propagation**: The logger is automatically propagated through all layers via context
+2. **Contextual Information**: Each log entry includes request-specific information (request ID, etc.)
+3. **Structured Logging**: Uses structured logging with fields for better filtering and analysis
+4. **Clean API**: No need to pass a logger separately to methods
+5. **Consistent Logging**: All components access the same logger with the same request context
+
+#### Complete Zap Logger Implementation Example
+
+Here's a complete implementation of the context-aware logger using Zap:
 
 ```go
-// internal/usecase/user_usecase.go
-func (uc *UserUseCase) GetByID(ctx context.Context, id string) (*entity.User, error) {
-    logger := uc.logger.WithContext(ctx).WithFields(map[string]interface{}{
-        interfaces.FieldComponent: "usecase",
-        interfaces.FieldModule:    "user",
-        interfaces.FieldFunction:  "GetByID",
-        "user_id":                 id,
-    })
-
-    logger.Info("Getting user by ID")
-
-    if id == "" {
-        logger.Warn("Empty user ID provided")
-        return nil, errors.New("user ID cannot be empty")
-    }
-
-    user, err := uc.userRepo.FindByID(ctx, id)
-    if err != nil {
-        logger.WithError(err).Error("Failed to get user by ID")
-        return nil, err
-    }
-
-    logger.Debug("Successfully retrieved user")
-    return user, nil
-}
-```
-
-#### 3. HTTP Handler Layer
-
-```go
-// internal/adapter/handler/http/user_handler.go
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
-    logger := h.logger.WithContext(ctx).WithFields(map[string]interface{}{
-        interfaces.FieldComponent: "http_handler",
-        interfaces.FieldModule:    "user",
-        interfaces.FieldFunction:  "GetUser",
-    })
-
-    // Extract user ID from request
-    vars := mux.Vars(r)
-    id := vars["id"]
-
-    logger.WithField("user_id", id).Info("Handling get user request")
-
-    // Measure the entire handler execution time
-    timer := logger.TimeOperation("handler_execution")
-
-    user, err := h.userUseCase.GetByID(ctx, id)
-    if err != nil {
-        logger.WithError(err).Error("Failed to get user")
-        w.WriteHeader(http.StatusNotFound)
-        json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-        timer.EndError("Handler failed")
-        return
-    }
-
-    // Create the response
-    response := toUserResponse(user)
-
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(response)
-
-    timer.EndInfo("Handler completed successfully")
-}
-```
-
-### HTTP Middleware for Request Logging
-
-```go
-// internal/api/middleware/logger.go
-package middleware
+package logger
 
 import (
-    "context"
-    "net/http"
-    "time"
+	"context"
+	"fmt"
+	"log"
+	"os"
 
-    "github.com/google/uuid"
-    "github.com/example/project/internal/interfaces"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-// RequestLogger creates a middleware for logging HTTP requests
-func RequestLogger(logger interfaces.Logger) func(http.Handler) http.Handler {
-    return func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            start := time.Now()
+// ctxKey is the type used as key for storing and retrieving logger from context
+type ctxKey struct{}
 
-            // Generate request ID if not present
-            requestID := r.Header.Get("X-Request-ID")
-            if requestID == "" {
-                requestID = uuid.New().String()
-                r.Header.Set("X-Request-ID", requestID)
-            }
+// Global logger instance
+var BaseLogger Log
 
-            // Create a request-scoped logger
-            reqLogger := logger.WithFields(map[string]interface{}{
-                interfaces.FieldRequestID: requestID,
-                interfaces.FieldComponent: "http",
-                "method":                  r.Method,
-                "path":                    r.URL.Path,
-                "remote_addr":             r.RemoteAddr,
-                "user_agent":              r.UserAgent(),
-            })
-
-            // Store logger in context
-            ctx := context.WithValue(r.Context(), "logger", reqLogger)
-
-            // Log request start
-            reqLogger.Debug("Request started")
-
-            // Create response wrapper to capture status code
-            wrapper := newResponseWrapper(w)
-
-            // Process request
-            next.ServeHTTP(wrapper, r.WithContext(ctx))
-
-            // Calculate duration
-            duration := time.Since(start).Milliseconds()
-
-            // Log request completion with appropriate level
-            logFields := map[string]interface{}{
-                "status":                  wrapper.status,
-                "size":                    wrapper.size,
-                interfaces.FieldDuration:  duration,
-            }
-
-            // Choose log level based on status code
-            if wrapper.status >= 500 {
-                reqLogger.WithFields(logFields).Error("Request completed with server error")
-            } else if wrapper.status >= 400 {
-                reqLogger.WithFields(logFields).Warn("Request completed with client error")
-            } else {
-                reqLogger.WithFields(logFields).Info("Request completed successfully")
-            }
-        })
-    }
+// Log is the interface for logging operations
+type Log interface {
+	FromCtx(ctx context.Context) Log
+	WithCtx(ctx context.Context) context.Context
+	WithFields(fields ...any) Log
+	Debug(msg string, fields ...any)
+	Info(msg string, fields ...any)
+	Warn(msg string, fields ...any)
+	Error(msg string, fields ...any)
+	Panic(msg string, fields ...any)
+	DPanic(msg string, fields ...any)
+	Fatal(msg string, fields ...any)
 }
 
-// responseWrapper wraps http.ResponseWriter to capture status code and size
-type responseWrapper struct {
-    http.ResponseWriter
-    status int
-    size   int
+// ZapLogger implements the Log interface using Zap
+type ZapLogger struct {
+	logger *zap.Logger
 }
 
-func newResponseWrapper(w http.ResponseWriter) *responseWrapper {
-    return &responseWrapper{ResponseWriter: w, status: http.StatusOK}
+// Init initializes the global logger
+func Init() {
+	// Check if the logger is already initialized
+	if BaseLogger != nil {
+		BaseLogger.DPanic("Base Global Logger is already initialized")
+		return
+	}
+
+	// Create a new zap logger
+	logger := newZapLogger()
+	BaseLogger = &ZapLogger{logger: logger}
 }
 
-func (rw *responseWrapper) WriteHeader(code int) {
-    rw.status = code
-    rw.ResponseWriter.WriteHeader(code)
+// newZapLogger creates a new zap.Logger with appropriate configuration
+func newZapLogger() *zap.Logger {
+	// Configure stdout as the output
+	stdout := zapcore.AddSync(os.Stdout)
+
+	// Set default log level to INFO
+	level := zap.InfoLevel
+
+	// Get log level from environment variable if set
+	levelEnv := os.Getenv("LOG_LEVEL")
+	if levelEnv != "" {
+		levelFromEnv, err := zapcore.ParseLevel(levelEnv)
+		if err != nil {
+			log.Println(
+				fmt.Errorf("invalid level, defaulting to INFO: %w", err),
+			)
+		} else {
+			level = levelFromEnv
+		}
+	}
+
+	logLevel := zap.NewAtomicLevelAt(level)
+
+	// Configure encoder based on environment
+	var encoderConfig zapcore.EncoderConfig
+
+	// Use different encoder configs for production and development
+	if os.Getenv("APP_ENV") == "prod" {
+		encoderConfig = zap.NewProductionEncoderConfig()
+		encoderConfig.TimeKey = "timestamp"
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	} else {
+		encoderConfig = zap.NewDevelopmentEncoderConfig()
+		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+
+	// Create encoder
+	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
+
+	// Create core and logger
+	core := zapcore.NewCore(consoleEncoder, stdout, logLevel)
+	return zap.New(core)
 }
 
-func (rw *responseWrapper) Write(b []byte) (int, error) {
-    size, err := rw.ResponseWriter.Write(b)
-    rw.size += size
-    return size, err
-}
-```
+// FromCtx extracts a logger from context
+func (l *ZapLogger) FromCtx(ctx context.Context) Log {
+	// Check if the logger is already attached to the context
+	if logger, ok := ctx.Value(ctxKey{}).(*ZapLogger); ok {
+		return logger
+	}
 
-## Integrating Bootstrap and Logging in Clean Architecture
-
-Here's how to combine dependency injection with the bootstrap pattern and structured logging in a cohesive clean architecture implementation:
-
-### 1. Enhanced Container with Logger
-
-```go
-// internal/bootstrap/container.go
-package bootstrap
-
-import (
-    "database/sql"
-
-    "github.com/example/project/internal/interfaces"
-)
-
-// Container holds all application dependencies as interfaces
-type Container struct {
-    // Infrastructure
-    DB *sql.DB
-
-    // Repositories (interfaces)
-    UserRepository interfaces.UserRepository
-
-    // Use cases (interfaces)
-    UserUseCase interfaces.UserUseCase
-
-    // Cross-cutting concerns
-    Logger interfaces.Logger
-
-    // Server
-    Server interfaces.HTTPServer
+	// Return the base logger if none is found in context
+	return l
 }
 
-// Bootstrap initializes all application dependencies
-func Bootstrap() (*Container, error) {
-    // Initialize the logger first for early diagnostics
-    logger, err := initLogger()
-    if err != nil {
-        return nil, err
-    }
+// WithCtx adds the logger to context
+func (l *ZapLogger) WithCtx(ctx context.Context) context.Context {
+	// Check if the same logger is already in context
+	if logger, ok := ctx.Value(ctxKey{}).(*ZapLogger); ok {
+		if logger == l {
+			// Don't store same logger instance
+			return ctx
+		}
+	}
 
-    logger.Info("Bootstrapping application")
+	// Attach the logger to context
+	return context.WithValue(ctx, ctxKey{}, l)
+}
 
-    // Create the container with the logger
-    container := &Container{
-        Logger: logger,
-    }
+// WithFields returns a new logger with additional fields
+func (l *ZapLogger) WithFields(fields ...any) Log {
+	// Add fields to the logger
+	sugar := l.logger.Sugar().With(fields...)
+	return &ZapLogger{logger: sugar.Desugar()}
+}
 
-    // Load configuration
-    config, err := initConfig()
-    if err != nil {
-        logger.WithError(err).Error("Failed to load configuration")
-        return nil, err
-    }
+// Debug logs a debug message with fields
+func (l *ZapLogger) Debug(msg string, fields ...any) {
+	l.logger.Sugar().Debugw(msg, fields...)
+}
 
-    // Initialize components with tracing
-    dbTimer := logger.TimeOperation("init_database")
-    db, err := initDatabase(config.Database, logger)
-    if err != nil {
-        dbTimer.EndError("Failed to initialize database")
-        return nil, err
-    }
-    dbTimer.EndInfo("Database initialized successfully")
-    container.DB = db
+// Info logs an info message with fields
+func (l *ZapLogger) Info(msg string, fields ...any) {
+	l.logger.Sugar().Infow(msg, fields...)
+}
 
-    // Initialize repositories with component-specific loggers
-    repoLogger := logger.WithComponent("repository")
-    container.UserRepository = initUserRepository(db, repoLogger)
+// Warn logs a warning message with fields
+func (l *ZapLogger) Warn(msg string, fields ...any) {
+	l.logger.Sugar().Warnw(msg, fields...)
+}
 
-    // Initialize use cases with component-specific loggers
-    usecaseLogger := logger.WithComponent("usecase")
-    container.UserUseCase = initUserUseCase(container.UserRepository, usecaseLogger)
+// Error logs an error message with fields
+func (l *ZapLogger) Error(msg string, fields ...any) {
+	l.logger.Sugar().Errorw(msg, fields...)
+}
 
-    // Initialize server with component-specific logger
-    serverLogger := logger.WithComponent("http_server")
-    server, err := initHTTPServer(config.Server.Port, serverLogger)
-    if err != nil {
-        logger.WithError(err).Error("Failed to initialize HTTP server")
-        return nil, err
-    }
-    container.Server = server
+// Panic logs a message with fields and then panics
+func (l *ZapLogger) Panic(msg string, fields ...any) {
+	l.logger.Sugar().Panicw(msg, fields...)
+}
 
-    logger.Info("Application bootstrapped successfully")
-    return container, nil
+// DPanic logs a message with fields and panics in development mode
+func (l *ZapLogger) DPanic(msg string, fields ...any) {
+	l.logger.Sugar().DPanicw(msg, fields...)
+}
+
+// Fatal logs a message with fields and then calls os.Exit(1)
+func (l *ZapLogger) Fatal(msg string, fields ...any) {
+	l.logger.Sugar().Fatalw(msg, fields...)
 }
 ```
 
-### 2. Repository Initialization with Logger
 
-```go
-// internal/bootstrap/init.go
-func initUserRepository(db *sql.DB, logger interfaces.Logger) interfaces.UserRepository {
-    logger.Debug("Initializing user repository")
-    return postgres.NewUserRepository(db, logger.WithModule("user"))
-}
+## Testing Approach
 
-// internal/adapter/repository/postgres/user_repository.go
-type UserRepository struct {
-    db     *sql.DB
-    logger interfaces.Logger
-}
+1. **Unit Tests**: Test individual components in isolation using mocks
+2. **Integration Tests**: Test interaction between components
+3. **End-to-End Tests**: Test complete flows through the system
 
-func NewUserRepository(db *sql.DB, logger interfaces.Logger) *UserRepository {
-    return &UserRepository{
-        db:     db,
-        logger: logger,
-    }
-}
-```
+## Notes
 
-### 3. Use Case Initialization with Logger
-
-```go
-// internal/bootstrap/init.go
-func initUserUseCase(repo interfaces.UserRepository, logger interfaces.Logger) interfaces.UserUseCase {
-    logger.Debug("Initializing user use case")
-    return usecase.NewUserUseCase(repo, logger.WithModule("user"))
-}
-
-// internal/usecase/user_usecase.go
-type UserUseCase struct {
-    repo   interfaces.UserRepository
-    logger interfaces.Logger
-}
-
-func NewUserUseCase(repo interfaces.UserRepository, logger interfaces.Logger) *UserUseCase {
-    return &UserUseCase{
-        repo:   repo,
-        logger: logger,
-    }
-}
-```
-
-### 4. Setting Up HTTP Routes with Middleware
-
-```go
-// internal/api/route/setup.go
-package route
-
-import (
-    "net/http"
-
-    "github.com/gorilla/mux"
-    "github.com/example/project/internal/api/middleware"
-    "github.com/example/project/internal/bootstrap"
-)
-
-// Setup configures all HTTP routes
-func Setup(container *bootstrap.Container) http.Handler {
-    r := mux.NewRouter()
-
-    // Apply global middleware
-    r.Use(middleware.RequestLogger(container.Logger))
-    r.Use(middleware.Recovery(container.Logger))
-
-    // User routes
-    userHandler := container.UserHandler
-    r.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
-    r.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
-
-    return r
-}
-```
-
-### 5. Main Application with Graceful Shutdown and Logging
-
-```go
-// cmd/api/main.go
-package main
-
-import (
-    "context"
-    "os"
-    "os/signal"
-    "syscall"
-    "time"
-
-    "github.com/example/project/internal/api/route"
-    "github.com/example/project/internal/bootstrap"
-)
-
-func main() {
-    // Bootstrap the application
-    container, err := bootstrap.Bootstrap()
-    if err != nil {
-        panic(err)
-    }
-
-    logger := container.Logger
-    logger.Info("Application initialized successfully")
-
-    // Ensure proper shutdown
-    defer func() {
-        if err := container.Shutdown(); err != nil {
-            logger.Error("Error during shutdown", "error", err)
-        }
-    }()
-
-    // Set up HTTP routes using the container
-    router := route.Setup(container)
-
-    // Configure the HTTP server with the router
-    server := container.Server
-    server.SetHandler(router)
-
-    // Start the server in a goroutine
-    serverErrors := make(chan error, 1)
-    go func() {
-        logger.Info("Starting HTTP server", "port", server.Port())
-        serverErrors <- server.Start()
-    }()
-
-    // Wait for interrupt or server errors
-    shutdownSignal := make(chan os.Signal, 1)
-    signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
-
-    select {
-    case err := <-serverErrors:
-        logger.Error("Server error", "error", err)
-    case sig := <-shutdownSignal:
-        logger.Info("Shutdown signal received", "signal", sig)
-    }
-
-    // Create a deadline for server shutdown
-    shutdownTimer := logger.TimeOperation("graceful_shutdown")
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
-
-    // Shut down the server
-    if err := server.Shutdown(ctx); err != nil {
-        logger.Error("Server forced to shutdown", "error", err)
-        os.Exit(1)
-    }
-
-    shutdownTimer.EndInfo("Server gracefully stopped")
-}
-```
-
-### 6. Recovery Middleware with Logger
-
-```go
-// internal/api/middleware/recovery.go
-package middleware
-
-import (
-    "net/http"
-    "runtime/debug"
-
-    "github.com/example/project/internal/interfaces"
-)
-
-// Recovery middleware catches panics and logs them
-func Recovery(logger interfaces.Logger) func(http.Handler) http.Handler {
-    return func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            defer func() {
-                if err := recover(); err != nil {
-                    // Log the panic with stack trace
-                    logger.WithFields(map[string]interface{}{
-                        interfaces.FieldComponent: "http",
-                        "stack":                   string(debug.Stack()),
-                        "panic":                   err,
-                    }).Error("Panic recovered in HTTP handler")
-
-                    // Return 500 Internal Server Error
-                    http.Error(w,
-                        "The server encountered an unexpected error",
-                        http.StatusInternalServerError)
-                }
-            }()
-            next.ServeHTTP(w, r)
-        })
-    }
-}
-```
-
-### 7. Logger Shutdown
-
-```go
-// internal/bootstrap/container.go
-func (c *Container) Shutdown() error {
-    c.Logger.Info("Shutting down application")
-
-    // Close database connection
-    if c.DB != nil {
-        c.Logger.Debug("Closing database connection")
-        if err := c.DB.Close(); err != nil {
-            c.Logger.Error("Error closing database", "error", err)
-            return err
-        }
-    }
-
-    // Custom shutdown logic for other components
-    // ...
-
-    c.Logger.Info("Application shutdown complete")
-    return nil
-}
-```
+This template implements multiple delivery mechanisms (HTTP, gRPC, AMQP, NATS) demonstrating how the same business logic can be exposed through different interfaces while maintaining separation of concerns.
