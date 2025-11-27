@@ -5,7 +5,7 @@ description: Implement Clean Architecture principles to create maintainable, tes
 
 # Clean Architecture
 
-Implementation patterns for designing software systems following Clean Architecture principles.
+Core principles and patterns for designing software systems following Clean Architecture principles.
 
 ## When to Use
 
@@ -48,21 +48,25 @@ Implementation patterns for designing software systems following Clean Architect
    - Domain objects
    - Business rules that apply to the entire organization
    - Have no dependencies on outer layers
+   - Examples: User, Product, Order
 
 2. **Application Business Rules (Use Cases)**
    - Application-specific business rules
    - Orchestrate the flow of data to/from entities
    - Implement use cases that represent system behavior
+   - Examples: CreateOrder, ProcessPayment, RegisterUser
 
 3. **Interface Adapters**
    - Convert data between use cases/entities and external layers
    - Controllers, presenters, and gateways
    - Framework-specific adapters
+   - Examples: REST controllers, database repositories, view models
 
 4. **Frameworks & Drivers**
    - Frameworks, tools, and delivery mechanisms
    - Database, web frameworks, devices
    - Most volatile layer, can be replaced
+   - Examples: Express/Flask/Rails, React/Vue, PostgreSQL/MongoDB
 
 ## Dependency Rule
 
@@ -73,217 +77,6 @@ The fundamental rule of Clean Architecture:
 ```
 External World  →  Adapters  →  Use Cases  →  Entities
    (low level)                                (high level)
-```
-
-## Implementation Patterns
-
-### Golang Implementation
-
-```go
-// entities/user.go
-package entities
-
-type User struct {
-    ID    string
-    Name  string
-    Email string
-}
-
-func (u *User) ValidateEmail() bool {
-    // Domain validation logic
-    return true
-}
-
-// usecases/user.go
-package usecases
-
-import "app/entities"
-
-type UserRepository interface {
-    FindByID(id string) (*entities.User, error)
-    Save(user *entities.User) error
-}
-
-type UserUseCase struct {
-    repo UserRepository
-}
-
-func NewUserUseCase(repo UserRepository) *UserUseCase {
-    return &UserUseCase{repo: repo}
-}
-
-func (uc *UserUseCase) GetUser(id string) (*entities.User, error) {
-    return uc.repo.FindByID(id)
-}
-
-// adapters/repository.go
-package adapters
-
-import (
-    "app/entities"
-    "database/sql"
-)
-
-type SQLUserRepository struct {
-    db *sql.DB
-}
-
-func (r *SQLUserRepository) FindByID(id string) (*entities.User, error) {
-    // SQL implementation
-    return &entities.User{}, nil
-}
-
-// frameworks/http/handler.go
-package http
-
-import (
-    "app/usecases"
-    "net/http"
-)
-
-type UserHandler struct {
-    userUseCase *usecases.UserUseCase
-}
-
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-    // HTTP handling
-}
-```
-
-### TypeScript Implementation
-
-```typescript
-// entities/user.ts
-export class User {
-  constructor(
-    private readonly id: string,
-    private name: string,
-    private email: string,
-  ) {}
-
-  validateEmail(): boolean {
-    // Domain validation logic
-    return true;
-  }
-}
-
-// use-cases/get-user.ts
-import { User } from '../entities/user';
-
-export interface UserRepository {
-  findById(id: string): Promise<User>;
-  save(user: User): Promise<void>;
-}
-
-export class GetUserUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
-
-  async execute(id: string): Promise<User> {
-    return this.userRepository.findById(id);
-  }
-}
-
-// adapters/user-repository.ts
-import { User } from '../entities/user';
-import { UserRepository } from '../use-cases/get-user';
-import { Database } from '../frameworks/database';
-
-export class SqlUserRepository implements UserRepository {
-  constructor(private readonly db: Database) {}
-
-  async findById(id: string): Promise<User> {
-    // Database implementation
-    return new User('1', 'John', 'john@example.com');
-  }
-}
-
-// frameworks/express/user-controller.ts
-import { Request, Response } from 'express';
-import { GetUserUseCase } from '../../use-cases/get-user';
-
-export class UserController {
-  constructor(private readonly getUserUseCase: GetUserUseCase) {}
-
-  async getUser(req: Request, res: Response): Promise<void> {
-    const user = await this.getUserUseCase.execute(req.params.id);
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
-  }
-}
-```
-
-### Python Implementation
-
-```python
-# entities/user.py
-class User:
-    def __init__(self, user_id, name, email):
-        self.id = user_id
-        self.name = name
-        self.email = email
-
-    def validate_email(self):
-        # Domain validation logic
-        return True
-
-# use_cases/user_use_case.py
-from abc import ABC, abstractmethod
-from entities.user import User
-
-class UserRepository(ABC):
-    @abstractmethod
-    def find_by_id(self, user_id):
-        pass
-
-    @abstractmethod
-    def save(self, user):
-        pass
-
-class GetUserUseCase:
-    def __init__(self, user_repository):
-        self.user_repository = user_repository
-
-    def execute(self, user_id):
-        return self.user_repository.find_by_id(user_id)
-
-# adapters/repositories.py
-from use_cases.user_use_case import UserRepository
-from entities.user import User
-
-class SqlUserRepository(UserRepository):
-    def __init__(self, db_connection):
-        self.db = db_connection
-
-    def find_by_id(self, user_id):
-        # SQL implementation
-        return User(user_id, "John", "john@example.com")
-
-    def save(self, user):
-        # SQL implementation
-        pass
-
-# frameworks/flask_app.py
-from flask import Flask, jsonify
-from adapters.repositories import SqlUserRepository
-from use_cases.user_use_case import GetUserUseCase
-import sqlite3
-
-app = Flask(__name__)
-db = sqlite3.connect("database.db")
-user_repository = SqlUserRepository(db)
-get_user_use_case = GetUserUseCase(user_repository)
-
-@app.route("/users/<user_id>")
-def get_user(user_id):
-    user = get_user_use_case.execute(user_id)
-    return jsonify({
-        "id": user.id,
-        "name": user.name,
-        "email": user.email
-    })
 ```
 
 ## Dependency Inversion
@@ -421,6 +214,14 @@ src/
     ├── interfaces/
     └── infrastructure/
 ```
+
+## Language-Specific Implementations
+
+For language-specific implementations and examples, please refer to:
+
+- [Clean Architecture in Golang](clean-architecture/golang.md)
+- [Clean Architecture in TypeScript](clean-architecture/typescript.md)
+- [Clean Architecture in Python](clean-architecture/python.md)
 
 ## Related Concepts
 

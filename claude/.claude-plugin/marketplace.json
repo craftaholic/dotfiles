@@ -74,6 +74,9 @@
       ],
       "skills": [
         "clean-architecture",
+        "clean-architecture-golang",
+        "clean-architecture-typescript",
+        "clean-architecture-python",
         "ddd-patterns",
         "hexagonal-design",
         "microservices",
