@@ -33,13 +33,17 @@ return {
         local opts = { noremap = true, silent = true, buffer = args.buf }
         local keymap = vim.keymap
 
-        local function checkBufferMethod(method)
-          for _, curentClient in pairs(vim.lsp.get_clients({ bufnr = args.buf })) do
-            if curentClient:supports_method(method) then
-              return true
+        -- Helper function to check capability at runtime
+        local function with_capability(method, action, fallback_msg)
+          return function()
+            for _, client in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
+              if client:supports_method(method) then
+                action()
+                return
+              end
             end
+            print("LSP: " .. fallback_msg)
           end
-          return false
         end
 
         -- General LSP-related keymaps
@@ -54,7 +58,6 @@ return {
 
         opts.desc = "Show buffer diagnostics"
         keymap.set("n", "<leader>cD", "<cmd>FzfLua diagnostics_document<CR>", opts)
-
 
         -- diagnostic
         local diagnostic_goto = function(next, severity)
@@ -79,54 +82,48 @@ return {
         opts.desc = "Show dynamic workspace symbols"
         keymap.set("n", "<leader>css", "<cmd>FzfLua lsp_workspace_symbols<CR>", opts)
 
-        -- Per-capability mappings
-        if checkBufferMethod('textDocument/declaration') then
-          opts.desc = "Go to declaration"
-          keymap.set("n", "gD", "<cmd>FzfLua lsp_declarations", opts)
-        else
-          opts.desc = "Declaration not supported"
-          keymap.set("n", "gD", function() print("LSP: declaration not supported") end, opts)
-        end
+        -- Per-capability mappings (checked at runtime)
+        opts.desc = "Go to declaration"
+        keymap.set("n", "gD", with_capability(
+          'textDocument/declaration',
+          function() vim.cmd('FzfLua lsp_declarations') end,
+          "declaration not supported"
+        ), opts)
 
-        if checkBufferMethod('textDocument/definition') then
-          opts.desc = "Show LSP definitions"
-          keymap.set("n", "gd", "<cmd>FzfLua lsp_definitions<CR>", opts)
-        else
-          opts.desc = "Definition not supported"
-          keymap.set("n", "gd", function() print("LSP: definition not supported") end, opts)
-        end
+        opts.desc = "Show LSP definitions"
+        keymap.set("n", "gd", with_capability(
+          'textDocument/definition',
+          function() vim.cmd('FzfLua lsp_definitions') end,
+          "definition not supported"
+        ), opts)
 
-        if checkBufferMethod('textDocument/implementation') then
-          opts.desc = "Show LSP implementations"
-          keymap.set("n", "<leader>ci", "<cmd>FzfLua lsp_implementations<CR>", opts)
-        else
-          opts.desc = "Implementation not supported"
-          keymap.set("n", "<leader>ci", function() print("LSP: implementation not supported") end, opts)
-        end
+        opts.desc = "Show LSP implementations"
+        keymap.set("n", "<leader>ci", with_capability(
+          'textDocument/implementation',
+          function() vim.cmd('FzfLua lsp_implementations') end,
+          "implementation not supported"
+        ), opts)
 
-        if checkBufferMethod('textDocument/typeDefinition') then
-          opts.desc = "Show LSP type definitions"
-          keymap.set("n", "<leader>ct", "<cmd>FzfLua lsp_typedefs<CR>", opts)
-        else
-          opts.desc = "Type definition not supported"
-          keymap.set("n", "<leader>ct", function() print("LSP: type definition not supported") end, opts)
-        end
+        opts.desc = "Show LSP type definitions"
+        keymap.set("n", "<leader>ct", with_capability(
+          'textDocument/typeDefinition',
+          function() vim.cmd('FzfLua lsp_typedefs') end,
+          "type definition not supported"
+        ), opts)
 
-        if checkBufferMethod('textDocument/codeAction') then
-          opts.desc = "See available code actions"
-          keymap.set({ "n", "v" }, "<leader>ca", "<cmd>FzfLua lsp_code_actions<CR>", opts)
-        else
-          opts.desc = "Code action not supported"
-          keymap.set({ "n", "v" }, "<leader>ca", function() print("LSP: code action not supported") end, opts)
-        end
+        opts.desc = "See available code actions"
+        keymap.set({ "n", "v" }, "<leader>ca", with_capability(
+          'textDocument/codeAction',
+          function() vim.cmd('FzfLua lsp_code_actions') end,
+          "code action not supported"
+        ), opts)
 
-        if checkBufferMethod('textDocument/rename') then
-          opts.desc = "Smart rename"
-          keymap.set("n", "<leader>crn", vim.lsp.buf.rename, opts)
-        else
-          opts.desc = "Rename not supported"
-          keymap.set("n", "<leader>crn", function() print("LSP: rename not supported") end, opts)
-        end
+        opts.desc = "Smart rename"
+        keymap.set("n", "<leader>crn", with_capability(
+          'textDocument/rename',
+          vim.lsp.buf.rename,
+          "rename not supported"
+        ), opts)
       end,
     })
 
@@ -152,11 +149,7 @@ return {
     )
 
     -- configure java server (with special settings)
-    vim.lsp.config("jdtls",
-      {
-        cmd = { 'jdtls' },
-        -- root_dir = vim.fs.dirname(vim.fs.find({ 'gradlew', '.git', 'mvnw' }, { upward = true })[1]),
-      })
+    vim.lsp.enable('jdtls', false) -- disable default jdtls setup to use custom one
 
     vim.lsp.config("pyright",
       {

@@ -41,7 +41,9 @@
     "amazon-q-cli@latest",
     "pnpm@latest",
     "starship@latest",
-    "nodejs@latest"
+    "nodejs@latest",
+    "jdk@21.0.4",
+    "maven@3.9.10"
   ],
   "shell": {
     "init_hook": [
