@@ -56,6 +56,8 @@ export PATH="$PATH:$HOME/go/bin:$HOME/.local/devtools/java/jdtls/bin"
 export GOBIN="$HOME/go/bin"
 export dry="--dry-run=client -o yaml"
 
+export TERM=tmux-256color
+
 ### Aliases
 alias ga='git add'
 alias gc='git commit -m'
