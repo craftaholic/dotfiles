@@ -13,7 +13,7 @@ return {
       return {
         cmd = {
           'jdtls',
-          '--jvm-arg=-javaagent:' .. vim.fn.expand('~/Documents/devtools/lombok/lombok.jar'),
+          '--jvm-arg=-javaagent:' .. vim.fn.expand('~/.local/devtools/java/lombok/lombok.jar'),
           '-data', workspace_dir,
         },
         root_dir = vim.fs.dirname(vim.fs.find({ 'gradlew', '.git', 'mvnw', 'pom.xml' }, { upward = true })[1]),
