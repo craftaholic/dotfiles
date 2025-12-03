@@ -117,6 +117,9 @@ stop_instance() {
 # Function to connect to instance via SSH
 connect_instance() {
     local instance_id=$1
+    shift  # Remove instance_id, rest are SSH args
+    local ssh_args="$@"
+    
     local state=$(get_instance_state "$instance_id")
     
     # Check if instance is running
@@ -159,7 +162,6 @@ connect_instance() {
         --query "Reservations[0].Instances[0].Tags[?Key=='Username'].Value | [0]" \
         --output text 2>/dev/null)
     
-    # If no username tag, try to determine from AMI or use default
     if [ "$username" == "None" ] || [ -z "$username" ]; then
         local ami_name=$(aws ec2 describe-instances \
             --profile "$AWS_PROFILE" \
@@ -173,6 +175,11 @@ connect_instance() {
     fi
     
     print_info "Connecting to $public_ip as $username..."
+    if [ -n "$ssh_args" ]; then
+        print_info "Extra SSH args: $ssh_args"
+    fi
+
+    print_info "Connecting to $public_ip as $username..."
     print_info "Connecting with sshuttle (localhost forwarding enabled)"
 
     # Start sshuttle for localhost forwarding
@@ -180,7 +187,7 @@ connect_instance() {
     sshuttle -D -r "$username@$public_ip" 127.0.0.1/32 -e "ssh -i $SSH_KEY"
 
     print_info "Connecting via SSH"
-    ssh -i "$SSH_KEY" "$username@$public_ip"
+    ssh -i "$SSH_KEY" $ssh_args "$username@$public_ip"
 
     pkill -f "sshuttle.*$public_ip"
 }
@@ -228,7 +235,8 @@ main() {
             stop_instance "$instance_id"
             ;;
         connect)
-            connect_instance "$instance_id"
+            shift  # Remove 'connect' from args
+            connect_instance "$instance_id" "$@"
             ;;
     esac
 }
