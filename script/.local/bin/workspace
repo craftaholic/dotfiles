@@ -181,15 +181,16 @@ connect_instance() {
 
     print_info "Connecting to $public_ip as $username..."
     print_info "Connecting with sshuttle (localhost forwarding enabled)"
+    print_info "You can use ssh -i $SSH_KEY $ssh_args $username@$public_ip"
 
     # Start sshuttle for localhost forwarding
-    print_info "Starting sshuttle tunnel"
-    sshuttle -D -r "$username@$public_ip" 127.0.0.1/32 -e "ssh -i $SSH_KEY"
+    # print_info "Starting sshuttle tunnel"
+    # sshuttle -D -r "$username@$public_ip" 127.0.0.1/32 -e "ssh -i $SSH_KEY"
 
     print_info "Connecting via SSH"
     ssh -i "$SSH_KEY" $ssh_args "$username@$public_ip"
 
-    pkill -f "sshuttle.*$public_ip"
+    # pkill -f "sshuttle.*$public_ip"
 }
 
 # Main script logic
