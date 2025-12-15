@@ -52,7 +52,6 @@ unsetopt HIST_IGNORE_ALL_DUPS HIST_EXPIRE_DUPS_FIRST EXTENDED_HISTORY
 ### Shell Options + Locale
 bindkey -v
 export LC_ALL="en_US.UTF-8"
-export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 export PATH="$PATH:$HOME/go/bin:$HOME/.local/devtools/java/jdtls/bin"
 export GOBIN="$HOME/go/bin"
 export dry="--dry-run=client -o yaml"
