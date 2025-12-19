@@ -1,3 +1,4 @@
 plugged/
 env/
 deploy.sh
+.claude/*
