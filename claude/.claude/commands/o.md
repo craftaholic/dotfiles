@@ -21,6 +21,7 @@ If no command or invalid command, respond:
 ```
 Available commands:
   new [feature]  Create session, research, architect, plan
+  current        Current session id
   status         Current session state
   proceed        Execute next task
   verify         Quality check
@@ -34,28 +35,33 @@ Usage: /o <command>
 ## Session Management
 Use script: `~/.claude/scripts/session.sh`
 
-| Command | Script Call |
-|---------|-------------|
-| new [feature] | `bash ~/.claude/scripts/session.sh new [feature]` |
-| sessions | `bash ~/.claude/scripts/session.sh list` |
-| switch [id] | `bash ~/.claude/scripts/session.sh switch [id]` |
-| (get current) | `bash ~/.claude/scripts/session.sh current` |
+| Command               | Script Call                                       |
+|-----------------------|---------------------------------------------------|
+| new [feature]         | `bash ~/.claude/scripts/session.sh new [feature]` |
+| sessions              | `bash ~/.claude/scripts/session.sh list`          |
+| switch [id]           | `bash ~/.claude/scripts/session.sh switch [id]`   |
+| current               | `bash ~/.claude/scripts/session.sh current`       |
 
-Handoff path: Read from `.claude/current-session`
+Handoff path: Read from running current command
 
 Files in handoff/:
-- context.md, research.md, architecture.md, plan.md, changes.md, review.md
+- context.md 
+- research.md
+- architecture.md
+- plan.md
+- changes.md
+- review.md
 
 ## Agents
 1. Researcher → explore, map
 2. Architect → system design
-3. Planner → task breakdown
+3. Planner → gather requirements, task breakdown
 4. Executor → implement
 5. Verifier → quality gate
 
 ## Workflows
 
-**new:** `session.sh new` → Researcher → Architect → Planner → present plan
+**new:** `session.sh new` → Planner (Verify requirement) -> Researcher → Architect → Planner (verify plan)
 
 **proceed:** Read plan → Executor (one task) → update changes.md, plan.md
 

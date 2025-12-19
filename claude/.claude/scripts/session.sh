@@ -126,7 +126,8 @@ case "$COMMAND" in
 
   "current")
     # Show current session
-    CURRENT_SESSION_FILE="${REPO_DIR}/current-session"
+    CURRENT_REPO_DIR="${REPOS_DIR}/${REPO_NAME}"
+    CURRENT_SESSION_FILE="${CURRENT_REPO_DIR}/current-session"
 
     if [ ! -f "${CURRENT_SESSION_FILE}" ]; then
       echo "No active session for repository: ${REPO_NAME}"
