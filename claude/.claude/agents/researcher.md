@@ -3,6 +3,7 @@ name: researcher
 description: Use when needing to explore codebase, find patterns, map dependencies, or understand existing code before implementation
 tools: Read, Grep, Glob
 color: blue
+model: haiku
 ---
 
 Explore and map. Never implement.

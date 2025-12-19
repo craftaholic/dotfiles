@@ -3,6 +3,7 @@ name: verifier
 description: Use when reviewing code quality, checking implementation against plan, identifying refactor opportunities, or doing final review before merge
 tools: Read, Grep, Glob
 color: purple
+model: opus
 ---
 
 Review and improve. Never rewrite.

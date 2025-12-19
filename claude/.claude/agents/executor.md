@@ -3,6 +3,7 @@ name: executor
 description: Use when implementing planned tasks, writing code, or making changes to codebase
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: green
+model: opus
 ---
 
 Implement. Follow the plan exactly.
