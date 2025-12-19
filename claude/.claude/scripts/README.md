@@ -15,22 +15,35 @@ The `session.sh` script serves as a helper for the `/o` command in Claude Code, 
 - Switching between sessions
 - Showing current active session
 
+### Key Features
+
+- Uses absolute paths for reliable operation
+- Robust error handling
+- Creates session directories with consistent structure
+- Properly identifies and displays available sessions
+
 ### Usage
 
 This script is used internally by the `/o` command in Claude Code, but can also be used directly:
 
 ```bash
-# Create a new session
+# Create a new session in the current repository
 ./session.sh new feature-name
 
-# List all sessions
+# List all sessions in the current repository
 ./session.sh list
 
-# Show current session
+# List all sessions across all repositories
+./session.sh list all
+
+# Show current session for the current repository
 ./session.sh current
 
-# Switch to another session
+# Switch to another session in the current repository
 ./session.sh switch 20251219-143932-feature-name
+
+# Switch to a session in a different repository
+./session.sh switch other-repo:20251219-143932-feature-name
 ```
 
 ### Integration with Claude
@@ -38,3 +51,11 @@ This script is used internally by the `/o` command in Claude Code, but can also 
 When you use the `/o` command in Claude Code, it uses this script to manage session state, while Claude handles the interpretation and execution of commands based on the definition in `.claude/commands/o.md`.
 
 The script follows a simple design principle - it does one thing (session management) and does it well.
+
+### Implementation Notes
+
+- Sessions are organized by repository: `$HOME/.claude/repos/REPO_NAME/sessions/SESSION_ID/handoff/`
+- Repository name is automatically detected from the git repository or current directory
+- Current session path for a repository is stored in `$HOME/.claude/repos/REPO_NAME/current-session`
+- Sessions are identified by timestamp-prefixed IDs for easy sorting
+- Cross-repository session management is supported via `repo:session` notation
