@@ -21,6 +21,9 @@ local config = {
   color_scheme = "catppuccin",
   -- front_end = "WebGpu",
 
+  -- This is a fix for using with hyprland
+  enable_wayland = false,
+
   colors = {
     cursor_bg = "#eb6f92",
   },
@@ -92,7 +95,7 @@ if wezterm.target_triple == "x86_64-pc-windows-msvc" then
   table.insert(config.launch_menu, { label = "PowerShell", args = { "powershell.exe", "-NoLogo" } })
 else
   config.default_prog = { '/bin/zsh', '-l' }
-  config.default_cwd = "~/Documents"
+  -- config.default_cwd = "~/Documents"
 end
 
 return config
