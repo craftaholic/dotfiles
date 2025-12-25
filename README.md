@@ -4,7 +4,7 @@ This repository provides a framework structure for storing all of your working e
 
 Additionally, this framework uses Devbox to install all required binaries and maintain consistent versions across platforms on all machines. Please read the instructions below on how to use it.
 
-I use Taskfile for all CLI scripting to ensure easy maintenance and readability.
+I provide both Taskfile and Makefile for all CLI scripting to ensure easy maintenance and readability. You can use either based on your preference.
 
 This project requires executing a setup script to configure the local machine environment. Please follow the instructions below based on your operating system.
 
@@ -12,9 +12,11 @@ This project requires executing a setup script to configure the local machine en
 ```
 .
 ├── LICENSE
+├── Makefile                                # GNU Make build automation
 ├── README.md
-├── Taskfile.yml
+├── Taskfile.yml                            # Task runner alternative to Make
 ├── aerospace                               # macOS window manager configuration
+├── claude                                  # Claude AI configuration and context
 ├── nvim                                    # Neovim configuration
 ├── packages                                # Contains the devbox configuration
 │   └── .local
@@ -30,20 +32,31 @@ This project requires executing a setup script to configure the local machine en
 
 # Prerequisites
 
-To run this framework, you only need to have Taskfile (similar to Makefile). The rest, including GNU Stow and Devbox, will be automatically installed during setup.
+To run this framework, you need either Taskfile or Make (most systems have Make pre-installed). The rest, including GNU Stow and Devbox, will be automatically installed during setup.
 
-- **Taskfile**: To install Taskfile, follow this guide: [Link to install Taskfile](https://taskfile.dev/installation/)
-- **stow**: You will need to install stow, to install use brew, apt, or any package manager
+**Choose one:**
+- **Make**: Pre-installed on most Unix systems (macOS, Linux)
+- **Taskfile**: Modern task runner alternative - [Install Taskfile](https://taskfile.dev/installation/)
+
+**Additional requirements:**
+- **stow**: Install using brew, apt, or any package manager
 - **zsh**
 
 # Neovim Dotfiles
 
-For details of my vim configuration, see: [Neovim Configuration](./nvim/README.md)
+For details of my vim configuration, see: [Neovim Configuration](./nvim/.config/nvim/README.md)
 
 # Installation
 
-To install the environment, run the following command:
+To install the environment, run one of the following commands:
+
+**Using Make:**
+```bash
+make setup
 ```
+
+**Using Taskfile:**
+```bash
 task setup
 ```
 
@@ -57,24 +70,18 @@ This command will:
 - Install Devbox if it's not already installed.
 - Install all required binaries (e.g., git, zsh) using the devbox.json configuration located in packages/.local/share/devbox/global/default/.
 
-# Taskfile Commands
+# Available Commands
 
-The `Taskfile.yml` provides several tasks to manage your environment:
+Both `Makefile` and `Taskfile.yml` provide the same tasks to manage your environment:
 
-- **Default Task**: Displays help information.
-  ```
-  task
-  ```
+| Command | Make | Taskfile |
+|---------|------|----------|
+| **Default/Help** | `make` or `make help` | `task` or `task help` |
+| **Setup** | `make setup` | `task setup` |
 
-- **Help**: Provides a welcome message and lists available tasks.
-  ```
-  task help
-  ```
-
-- **Setup**: Installs the environment and sets up the environment for macOS and Ubuntu.
-  ```
-  task setup
-  ```
+All commands will:
+- Display help information (default/help)
+- Install the environment and setup for macOS and Ubuntu (setup)
 
 # Devbox Integration
 
@@ -83,9 +90,9 @@ The devbox configuration is managed through the devbox.json file located at:
 packages/.local/share/devbox/global/default/devbox.json
 ```
 
-This file defines all the packages that will be installed and maintained by Devbox. To add, remove, or update packages, edit this file and run `devbox global install` or use the setup task:
-```
-task setup
+This file defines all the packages that will be installed and maintained by Devbox. To add, remove, or update packages, edit this file and run `devbox global install` or use the setup command:
+```bash
+make setup  # or: task setup
 ```
 
 # For WSL Specifically

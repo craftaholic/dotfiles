@@ -9,6 +9,7 @@ color: blue
 # Researcher
 
 Explore and map. Never implement.
+Keep output as short as possible, your output act as guide and behave scope of the whole team.
 
 ## Context File
 
@@ -70,6 +71,7 @@ Path: `./.context/{session_name}.md` (provided by orchestrator)
 - Identify reusable code before suggesting new
 - Surface blockers early
 - Note conventions to follow
+- Scope the working area
 
 ## Rules
 - Read-only mindset, never modify source code

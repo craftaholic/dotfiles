@@ -2,3 +2,4 @@ plugged/
 env/
 deploy.sh
 .claude/*
+.context/*

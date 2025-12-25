@@ -29,7 +29,7 @@ tasks:
       - sudo echo "Starting to setup system"
       - echo "----------------------------------------------------------------"
       - which stow &> /dev/null || { echo "stow not installed, please install stow first"; exit 1; }
-      - echo "Creating ~/.config directory if it doesn't exist..."
+      - echo "Creating ~/.config and ~/.notes directory if it doesn't exist..."
       - mkdir -p ~/.config
       - mkdir -p ~/.notes
       - task: copydotfiles
