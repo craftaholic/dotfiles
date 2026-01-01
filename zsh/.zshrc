@@ -93,3 +93,10 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan,underline"
 # ZSH_AUTOSUGGEST_USE_ASYNC=1
 
 eval "$(starship init zsh)"
+
+# bun completions
+[ -s "/home/tomwy/.bun/_bun" ] && source "/home/tomwy/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
