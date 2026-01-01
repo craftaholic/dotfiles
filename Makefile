@@ -23,6 +23,8 @@ setup:
 	@sudo echo "Starting to setup system"
 	@echo "----------------------------------------------------------------"
 	@which stow &> /dev/null || { echo "stow not installed, please install stow first"; exit 1; }
+	@echo "Initializing git submodules..."
+	@git submodule update --init --recursive
 	@echo "Creating ~/.config and ~/.notes directory if it doesn't exist..."
 	@mkdir -p ~/.config
 	@mkdir -p ~/.notes
