@@ -41,6 +41,8 @@ typeset -U path cdpath fpath manpath
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
+eval "$(mise activate zsh)"
+
 ### History
 HISTSIZE=1000
 SAVEHIST=1000

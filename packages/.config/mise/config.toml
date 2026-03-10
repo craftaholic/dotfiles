@@ -1,0 +1,30 @@
+[tools]
+awscli = { version = "latest", symlink_bins = "true" }
+bun = "latest"
+fzf = "latest"
+"github:curl/curl" = "latest"
+go = "latest"
+golangci-lint = "latest"
+helm = "latest"
+java = "latest"
+jq = "latest"
+k3d = "latest"
+kubectl = "latest"
+lazygit = "latest"
+make = "latest"
+maven = "latest"
+neovim = "latest"
+node = "latest"
+pnpm = "latest"
+python = "latest"
+ripgrep = "latest"
+rust = "latest"
+starship = "latest"
+terraform = "latest"
+terragrunt = "latest"
+tmux = "latest"
+yarn = "latest"
+yq = "latest"
+
+[settings]
+experimental = true
