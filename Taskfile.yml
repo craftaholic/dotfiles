@@ -1,7 +1,7 @@
 version: '3'
 
-vars:
-  DEVBOX_DIR_PATH: "$HOME/.local/share/devbox/global/default"
+# vars:
+#   DEVBOX_DIR_PATH: "$HOME/.local/share/devbox/global/default"
 
 tasks:
   default:
@@ -35,8 +35,8 @@ tasks:
       - mkdir -p ~/.config
       - mkdir -p ~/.notes
       - task: copydotfiles
-      - command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
-      - devbox global install 
+      # - command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
+      # - devbox global install 
     silent: true
 
   copydotfiles:
