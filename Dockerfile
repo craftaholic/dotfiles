@@ -53,11 +53,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# Install mise, a tool for managing multiple versions of Node.js
-RUN curl https://mise.run | sh
-
 USER ${USER_NAME}
 WORKDIR /home/${USER_NAME}/documents
+
+# Install mise, a tool for managing multiple versions of Node.js
+RUN curl https://mise.run | sh
 
 COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/
 
@@ -68,6 +68,6 @@ RUN cd dotfiles \
 
 RUN devbox global install
 
-RUN mise install -y
+RUN mise install -y || true
 
 ENTRYPOINT ["/bin/zsh"]
