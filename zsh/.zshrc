@@ -41,8 +41,6 @@ typeset -U path cdpath fpath manpath
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-eval "$(mise activate zsh)"
-
 ### History
 HISTSIZE=1000
 SAVEHIST=1000
@@ -54,9 +52,11 @@ unsetopt HIST_IGNORE_ALL_DUPS HIST_EXPIRE_DUPS_FIRST EXTENDED_HISTORY
 ### Shell Options + Locale
 bindkey -v
 export LC_ALL="en_US.UTF-8"
-export PATH="$PATH:$HOME/go/bin:$HOME/.local/devtools/java/jdtls/bin"
+export PATH="$PATH:$HOME/go/bin:$HOME/.local/devtools/java/jdtls/bin:$HOME/.local/bin"
 export GOBIN="$HOME/go/bin"
 export dry="--dry-run=client -o yaml"
+
+eval "$(mise activate zsh)"
 
 export TERM=tmux-256color
 

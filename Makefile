@@ -29,12 +29,12 @@ setup:
 	@mkdir -p ~/.config
 	@mkdir -p ~/.notes
 	@$(MAKE) copydotfiles
-	# Setting up mise
 	@command -v mise &> /dev/null || { curl https://mise.run | sh; }
 	@echo 'eval "$(~/.local/bin/mise activate zsh)"' >> ~/.zshrc
 	@echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
-	# @command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
-	# @devbox global install
+	@mise install
+	@command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
+	@devbox global install
 
 copydotfiles:
 	@for dir in */; do \

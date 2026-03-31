@@ -1,0 +1,7 @@
+.gitignore
+README.md
+LICENSE
+.DS_Store
+*.swp
+*.swo
+*~
