@@ -1,7 +1,7 @@
 version: '3'
 
-# vars:
-#   DEVBOX_DIR_PATH: "$HOME/.local/share/devbox/global/default"
+vars:
+  DEVBOX_DIR_PATH: "$HOME/.local/share/devbox/global/default"
 
 tasks:
   default:
