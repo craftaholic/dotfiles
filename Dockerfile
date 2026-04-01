@@ -41,9 +41,10 @@ RUN chown -R "${USER_NAME}:${USER_NAME}" /usr/local/bin/devbox
 ####################################################################
 
 ENV DEBIAN_FRONTEND=noninteractive \
-  DEVBOX_PATH="./.local/share/devbox/global/default/devbox.json" \
-  MISE_PATH="./.config/mise/config.toml" \
   PATH="/home/dev/.local/bin:${PATH}" 
+
+ARG DEVBOX_PATH="./.local/share/devbox/global/default/devbox.json" \
+  MISE_PATH="./.config/mise/config.toml"
 
 USER root
 
