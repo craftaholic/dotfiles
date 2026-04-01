@@ -1,14 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.6/.schema/devbox.schema.json",
   "packages": [
-    "git@latest",
-    "zsh@latest",
-    "zsh-autosuggestions@latest",
-    "zsh-autocomplete@latest",
-    "zsh-syntax-highlighting@latest",
-    "oh-my-zsh@latest",
+    "zsh@5.9",
+    "zsh-autosuggestions@0.7.1",
+    "zsh-autocomplete@25.03.19",
+    "zsh-syntax-highlighting@0.8.0",
+    "oh-my-zsh@2026-02-19",
     "gcc@14.3.0",
-    "luarocks@latest",
+    "luarocks@3.9.1",
+    "opencode@1.2.27"
   ],
   "shell": {
     "init_hook": [

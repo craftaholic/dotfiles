@@ -41,7 +41,9 @@ RUN chown -R "${USER_NAME}:${USER_NAME}" /usr/local/bin/devbox
 ####################################################################
 
 ENV DEBIAN_FRONTEND=noninteractive \
-  PATH="/home/dev/.local/bin:${PATH}"
+  DEVBOX_PATH="./.local/share/devbox/global/default/devbox.json" \
+  MISE_PATH="./.config/mise/config.toml" \
+  PATH="/home/dev/.local/bin:${PATH}" 
 
 USER root
 
@@ -59,15 +61,21 @@ WORKDIR /home/${USER_NAME}/documents
 # Install mise, a tool for managing multiple versions of Node.js
 RUN curl https://mise.run | sh
 
+# ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
+COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${DEVBOX_PATH} /home/${USER_NAME}/${DEVBOX_PATH}
+RUN devbox global install && \
+  rm -rf /home/${USER_NAME}/${DEVBOX_PATH}
+
+# ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
+COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${MISE_PATH} /home/${USER_NAME}/${MISE_PATH}
+RUN mise install -y && \
+  rm -rf /home/${USER_NAME}/${MISE_PATH}
+
 COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/
 
 # Copy dotfiles and set up the environment
 RUN cd dotfiles \
   && git config --global --add safe.directory /home/${USER_NAME}/dotfiles \
   && make copydotfiles
-
-RUN devbox global install
-
-RUN mise install -y || true
 
 ENTRYPOINT ["/bin/zsh"]
