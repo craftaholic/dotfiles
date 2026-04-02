@@ -65,12 +65,20 @@ RUN curl https://mise.run | sh
 
 # ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
 COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${DEVBOX_PATH} /home/${USER_NAME}/${DEVBOX_PATH}
-RUN devbox global install && \
+RUN --mount=type=secret,id=github_token,uid=1000 \
+  if [ -f /run/secrets/github_token ]; then \
+    export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
+  fi && \
+  devbox global install && \
   rm -rf /home/${USER_NAME}/${DEVBOX_PATH}
 
 # ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
 COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${MISE_PATH} /home/${USER_NAME}/${MISE_PATH}
-RUN mise install -y && \
+RUN --mount=type=secret,id=github_token,uid=1000 \
+  if [ -f /run/secrets/github_token ]; then \
+    export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
+  fi && \
+  mise install -y && \
   rm -rf /home/${USER_NAME}/${MISE_PATH}
 
 COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/

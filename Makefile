@@ -1,6 +1,6 @@
 DEVBOX_DIR_PATH := $(HOME)/.local/share/devbox/global/default
 
-.PHONY: default help setup copydotfiles
+.PHONY: default help setup copydotfiles build-docker
 
 default: help
 
@@ -9,11 +9,13 @@ help:
 	@echo "Run make <task_name> to run predefined script"
 	@echo ""
 	@echo "For setting up the environment            make setup"
+	@echo "For building the Docker image             make build-docker"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  help         - Show this help message"
 	@echo "  setup        - Install the environment, setup env for macOS and Ubuntu"
 	@echo "  copydotfiles - Create symlink to dotfiles (internal)"
+	@echo "  build-docker - Build Docker image with GitHub token from GITHUB_TOKEN env"
 
 setup:
 	@echo "----------------------------------------------------------------"
@@ -42,3 +44,18 @@ copydotfiles:
 			stow -R --no-folding --target "$(HOME)" "$$dir" 2>/dev/null || stow -R --no-folding --target "$(HOME)" "$$dir"; \
 		fi; \
 	done
+
+build-docker:
+	@if [ -z "$$GITHUB_TOKEN" ]; then \
+		echo "Error: GITHUB_TOKEN environment variable is not set"; \
+		echo ""; \
+		echo "Usage:"; \
+		echo "  GITHUB_TOKEN=ghp_yourtoken make build-docker"; \
+		echo "  export GITHUB_TOKEN=ghp_yourtoken && make build-docker"; \
+		exit 1; \
+	fi
+	@echo "Building Docker image with GitHub token..."
+	@echo "$$GITHUB_TOKEN" | DOCKER_BUILDKIT=1 docker build \
+		--secret id=github_token,src=/dev/stdin \
+		-t dotfiles:latest \
+		.
