@@ -93,6 +93,6 @@ RUN cd dotfiles \
 # Pre-install Neovim plugins and treesitter parsers
 RUN export PATH="/home/${USER_NAME}/.local/share/mise/shims:$PATH" && \
   nvim --headless "+Lazy! install" +qa && \
-  timeout 30 nvim --headless -c "TSUpdate" 2>&1 || true
+  timeout 60 nvim --headless -c "TSUpdate" 2>&1 || true
 
 ENTRYPOINT ["/bin/zsh"]
