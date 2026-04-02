@@ -55,6 +55,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   zsh \
   tmux \
   ca-certificates \
+  gcc \
+  g++ \
   && rm -rf /var/lib/apt/lists/*
 
 USER ${USER_NAME}
@@ -87,5 +89,10 @@ COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/
 RUN cd dotfiles \
   && git config --global --add safe.directory /home/${USER_NAME}/dotfiles \
   && make copydotfiles
+
+# Pre-install Neovim plugins and treesitter parsers
+RUN export PATH="/home/${USER_NAME}/.local/share/mise/shims:$PATH" && \
+  nvim --headless "+Lazy! install" +qa && \
+  timeout 30 nvim --headless -c "TSUpdate" 2>&1 || true
 
 ENTRYPOINT ["/bin/zsh"]

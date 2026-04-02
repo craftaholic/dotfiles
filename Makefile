@@ -57,5 +57,5 @@ build-docker:
 	@echo "Building Docker image with GitHub token..."
 	@echo "$$GITHUB_TOKEN" | DOCKER_BUILDKIT=1 docker build \
 		--secret id=github_token,src=/dev/stdin \
-		-t dotfiles:latest \
+		-t tommytran2804/devcontainer:latest \
 		.
