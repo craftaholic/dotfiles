@@ -37,6 +37,7 @@ To run this framework locally, you need Make (pre-installed on most systems). Th
 - **Make**: Pre-installed on most Unix systems (macOS, Linux)
 - **stow**: Install using brew, apt, or any package manager
 - **zsh**
+- **gcc**
 
 ## Docker Installation
 
