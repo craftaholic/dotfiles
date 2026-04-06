@@ -6,40 +6,15 @@ for file in ~/.zshrc ~/.zshenv ~/.zprofile ~/.zlogin ~/.zlogout; do
   fi
 done
 
-# Compile devbox cache files
-for file in ~/.devbox_cache; do
-  if [[ -f $file ]] && ([[ ! -f ${file}.zwc ]] || [[ $file -nt ${file}.zwc ]]); then
-    zcompile $file
-  fi
-done
-
 # Compile completion dump if it exists
 if [[ -f ~/.zcompdump ]] && ([[ ! -f ~/.zcompdump.zwc ]] || [[ ~/.zcompdump -nt ~/.zcompdump.zwc ]]); then
   zcompile ~/.zcompdump
 fi
 
-### Devbox Shell + Paths
-# Cache devbox paths to avoid multiple calls
-if [[ ! -f "$HOME/.devbox_cache" ]] || [[ ! -f "$HOME/.devbox_path_cache" ]]; then
-  devbox global shellenv > "$HOME/.devbox_cache" 2>/dev/null
-  devbox global path > "$HOME/.devbox_path_cache" 2>/dev/null
-fi
-. "$HOME/.devbox_cache" 2>/dev/null
-
-# Store path for reuse
-DEVBOX_PATH=$(cat "$HOME/.devbox_path_cache" 2>/dev/null)
-
 typeset -U path cdpath fpath manpath
-# path+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
-# fpath+="${DEVBOX_PATH}/.devbox/nix/profile/default/share/powerlevel10k"
 
-# Use direct paths instead of subshell calls
-# . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
-# . "${DEVBOX_PATH}/.devbox/nix/profile/default/share/oh-my-zsh/oh-my-zsh.sh"
-
-# Load these plugins at the end since they're less critical
-. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-. "${DEVBOX_PATH}/.devbox/nix/profile/default/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+source $HOME/.local/share/mise/installs/vfox-craftaholic-vfox-zsh-autosuggestions/vlatest/zsh-autosuggestions.zsh
+source $HOME/.local/share/mise/installs/vfox-craftaholic-vfox-zsh-syntax-highlighting/latest/zsh-syntax-highlighting.zsh
 
 ### History
 HISTSIZE=1000
@@ -102,3 +77,6 @@ eval "$(starship init zsh)"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# opencode
+export PATH=/home/tomwy/.opencode/bin:$PATH

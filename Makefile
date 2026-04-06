@@ -33,8 +33,6 @@ setup:
 	@$(MAKE) copydotfiles
 	@command -v mise &> /dev/null || { curl https://mise.run | sh; }
 	@mise install
-	@command -v devbox &> /dev/null || { curl -fsSL https://get.jetify.com/devbox | bash; }
-	@devbox global install
 
 copydotfiles:
 	@for dir in */; do \
