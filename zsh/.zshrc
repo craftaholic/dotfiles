@@ -14,6 +14,7 @@ fi
 typeset -U path cdpath fpath manpath
 
 source $HOME/.local/share/mise/installs/vfox-craftaholic-vfox-zsh-autosuggestions/vlatest/zsh-autosuggestions.zsh
+source $HOME/.local/share/mise/installs/vfox-craftaholic-vfox-zsh-syntax-highlighting/latest/zsh-syntax-highlighting.zsh
 
 ### History
 HISTSIZE=1000

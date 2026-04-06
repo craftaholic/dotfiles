@@ -10,6 +10,7 @@ USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   sudo \
+  adduser \
   make \
   stow \
   curl \
@@ -21,9 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 RUN adduser $USER_NAME \
-  RUN usermod -aG sudo $USER_NAME \
-  echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER_NAME \
-  USER $USER_NAME
+  && usermod -aG sudo $USER_NAME \
+  && echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER_NAME
 
 USER ${USER_NAME}
 WORKDIR /home/${USER_NAME}/documents
