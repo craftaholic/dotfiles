@@ -91,33 +91,7 @@ jobs:
             echo "No critical or high vulnerabilities found" >> trivy-summary.md
           fi
       
-      - name: Generate change summary
-        id: changes
-        run: |
-          # Get PR stats
-          FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
-          INSERTIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{add+=$1} END {print add}')
-          DELETIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{del+=$2} END {print del}')
-          
-          echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
-          echo "insertions=$INSERTIONS" >> $GITHUB_OUTPUT
-          echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
-          
-          # Generate file change summary
-          echo "## Changed Files" > changes-summary.md
-          git diff --name-status origin/${{ github.base_ref }}...HEAD | head -20 >> changes-summary.md
-          
-          if [ $(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l) -gt 20 ]; then
-            echo "" >> changes-summary.md
-            echo "... and $((FILES_CHANGED - 20)) more files" >> changes-summary.md
-          fi
-      
-      - name: Get commit messages
-        id: commits
-        run: |
-          echo "## Recent Commits" > commits-summary.md
-          git log origin/${{ github.base_ref }}..HEAD --pretty=format:"- %s (%an)" --no-merges | head -10 >> commits-summary.md
-      
+
       - name: Create PR comment
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
@@ -125,15 +99,10 @@ jobs:
           script: |
             const fs = require('fs');
             
-            // Read summaries
             const trivySummary = fs.readFileSync('trivy-summary.md', 'utf8');
-            const changesSummary = fs.readFileSync('changes-summary.md', 'utf8');
-            const commitsSummary = fs.readFileSync('commits-summary.md', 'utf8');
             
-            // Build status
             const buildStatus = '✅ Build successful';
             
-            // Security status
             const critical = ${{ steps.trivy-parse.outputs.critical }};
             const high = ${{ steps.trivy-parse.outputs.high }};
             const medium = ${{ steps.trivy-parse.outputs.medium }};
@@ -152,11 +121,6 @@ jobs:
               securityEmoji = '🟡';
             }
             
-            // Stats
-            const filesChanged = ${{ steps.changes.outputs.files_changed }};
-            const insertions = ${{ steps.changes.outputs.insertions }};
-            const deletions = ${{ steps.changes.outputs.deletions }};
-            
             const comment = `## 🔍 PR Check Results
             **Commit:** \`${{ github.event.pull_request.head.sha }}\`
             **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
@@ -173,23 +137,6 @@ jobs:
             - 🟡 Medium: ${medium}
             
             ${trivySummary}
-            
-            <details>
-            <summary>📊 Change Summary</summary>
-            
-            **Statistics:**
-            - Files changed: ${filesChanged}
-            - Insertions: +${insertions}
-            - Deletions: -${deletions}
-            
-            ${changesSummary}
-            </details>
-            
-            <details>
-            <summary>📝 Commits</summary>
-            
-            ${commitsSummary}
-            </details>
             
             ---
             *Automated check by GitHub Actions*
