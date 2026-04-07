@@ -9,6 +9,7 @@ ARG USER_NAME=dev \
 USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+  git \
   sudo \
   adduser \
   make \
@@ -38,7 +39,8 @@ RUN --mount=type=secret,id=github_token,uid=1000 \
     export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
   fi && \
   mise install -y && \
-  rm -rf /home/${USER_NAME}/${MISE_PATH}
+  rm -rf /home/${USER_NAME}/${MISE_PATH} && \
+  rm -rf /home/${USER_NAME}/.zshrc
 
 COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/
 
