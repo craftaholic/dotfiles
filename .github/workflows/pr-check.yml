@@ -23,6 +23,7 @@ jobs:
       critical-count: ${{ steps.trivy-parse.outputs.critical }}
       high-count: ${{ steps.trivy-parse.outputs.high }}
       medium-count: ${{ steps.trivy-parse.outputs.medium }}
+      secrets-found: ${{ steps.trufflehog.outcome == 'failure' }}
       scan-summary: ${{ steps.generate-summary.outputs.markdown }}
     
     steps:
@@ -46,6 +47,16 @@ jobs:
           cache-to: type=gha,mode=max
           secrets: |
             github_token=${{ secrets.GITHUB_TOKEN }}
+      
+      - name: TruffleHog OSS
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@6bd2d14f7a4bc1e569fa3550efa7ec632a4fa67b # v3.94.2
+        continue-on-error: true
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified
       
       - name: Run Trivy vulnerability scanner
         id: trivy
@@ -75,10 +86,15 @@ jobs:
         run: |
           CRITICAL=${{ steps.trivy-parse.outputs.critical }}
           HIGH=${{ steps.trivy-parse.outputs.high }}
+          SECRETS_FOUND="${{ steps.trufflehog.outcome }}"
           
           PASSED=true
           
           if [ "$CRITICAL" -gt 0 ]; then
+            PASSED=false
+          fi
+          
+          if [ "$SECRETS_FOUND" = "failure" ]; then
             PASSED=false
           fi
           
@@ -90,6 +106,7 @@ jobs:
           CRITICAL=${{ steps.trivy-parse.outputs.critical }}
           HIGH=${{ steps.trivy-parse.outputs.high }}
           MEDIUM=${{ steps.trivy-parse.outputs.medium }}
+          SECRETS_FOUND="${{ steps.trufflehog.outcome }}"
           PASSED=${{ steps.check-threshold.outputs.passed }}
           
           cat << 'EOF' > trivy-summary.md
@@ -104,7 +121,18 @@ jobs:
           fi
           
           echo "" >> trivy-summary.md
-          echo "### Vulnerability Summary" >> trivy-summary.md
+          
+          if [ "$SECRETS_FOUND" = "failure" ]; then
+            echo "### 🔑 Secret Scan (TruffleHog)" >> trivy-summary.md
+            echo "- 🔴 **Secrets detected in repository**" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+          else
+            echo "### 🔑 Secret Scan (TruffleHog)" >> trivy-summary.md
+            echo "- ✅ No secrets detected" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+          fi
+          
+          echo "### Vulnerability Summary (Trivy)" >> trivy-summary.md
           echo "- 🔴 Critical: $CRITICAL" >> trivy-summary.md
           echo "- 🟠 High: $HIGH" >> trivy-summary.md
           echo "- 🟡 Medium: $MEDIUM" >> trivy-summary.md
@@ -133,7 +161,7 @@ jobs:
             fi
           fi
           
-          if [ "$CRITICAL" -eq 0 ] && [ "$HIGH" -eq 0 ] && [ "$MEDIUM" -eq 0 ]; then
+          if [ "$CRITICAL" -eq 0 ] && [ "$HIGH" -eq 0 ] && [ "$MEDIUM" -eq 0 ] && [ "$SECRETS_FOUND" != "failure" ]; then
             echo "✅ No security issues found" >> trivy-summary.md
           fi
           
