@@ -156,7 +156,17 @@ CVE-2019-19814 # kernel: f2fs out-of-bounds write (2019)
 CVE-2021-3847  # kernel: privilege escalation (2021)
 CVE-2021-3864  # kernel: dumpable setting issue (2021)
 
+# 2024 CVEs
+CVE-2024-21803 # kernel: bluetooth UAF af_bluetooth.c
+CVE-2024-58015 # kernel: wifi ath12k out-of-bound access
+CVE-2024-58093 # kernel: PCI/ASPM UAF hot-unplug
+
 # 2025 CVEs
+CVE-2025-22104 # kernel: ibmvnic hex dump helpers
+CVE-2025-38137 # kernel: PCI/pwrctrl rescan work cancel
+CVE-2025-38187 # kernel: drm/nouveau UAF r535_gsp_rpc_push
+CVE-2025-38204 # kernel: jfs array-index-out-of-bounds
+CVE-2025-38206 # kernel: exFAT double free DoS
 CVE-2025-38421 # kernel: amd pmf device managed allocations
 CVE-2025-38584 # kernel: padata UAF
 CVE-2025-38627 # kernel: f2fs compress UAF
