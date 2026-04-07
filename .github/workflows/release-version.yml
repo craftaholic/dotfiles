@@ -11,10 +11,15 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+      image-ref: ${{ env.DOCKER_IMAGE }}@${{ steps.push.outputs.digest }}
+    
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout code
@@ -45,6 +50,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Docker image
+        id: push
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
@@ -56,3 +62,52 @@ jobs:
           cache-to: type=gha,mode=max
           secrets: |
             github_token=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-name: ${{ env.DOCKER_IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  security-scan:
+    needs: build-and-push
+    uses: ./.github/workflows/security-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      image-ref: ${{ needs.build-and-push.outputs.image-ref }}
+      severity: 'CRITICAL,HIGH,MEDIUM'
+      fail-on-severity: 'CRITICAL,HIGH'
+
+  update-release:
+    needs: [build-and-push, security-scan]
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'release'
+    
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Append security findings to release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SCAN_SUMMARY="${{ needs.security-scan.outputs.scan-summary }}"
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          
+          cat << 'EOF' > security-addendum.md
+          
+          ---
+          
+          $SCAN_SUMMARY
+          EOF
+          
+          gh release view "$RELEASE_TAG" --json body --jq .body > current-notes.md
+          cat current-notes.md security-addendum.md > updated-notes.md
+          
+          gh release edit "$RELEASE_TAG" --notes-file updated-notes.md

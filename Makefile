@@ -1,4 +1,4 @@
-DEVBOX_DIR_PATH := $(HOME)/.local/share/devbox/global/default
+SHELL := /bin/bash
 
 .PHONY: default help setup copydotfiles build-docker
 
@@ -18,20 +18,20 @@ help:
 	@echo "  build-docker - Build Docker image with GitHub token from GITHUB_TOKEN env"
 
 setup:
+	@echo "Checking for required tools..."
+	@which stow &> /dev/null || { echo "stow not installed, please install stow first"; exit 1; }
+	@which curl &> /dev/null || { echo "curl not installed, please install curl first"; exit 1; }
+	@which zsh &> /dev/null || { echo "zsh not installed, please install zsh first"; exit 1; }
+	@which gcc &> /dev/null || { echo "gcc not installed, please install gcc first"; exit 1; }
 	@echo "----------------------------------------------------------------"
 	@echo "This requires sudo permission to run"
 	@echo "Are you okay with it? This only uses the role to create symblink"
 	@echo "----------------------------------------------------------------"
 	@sudo echo "Starting to setup system"
 	@echo "----------------------------------------------------------------"
-	@which stow &> /dev/null || { echo "stow not installed, please install stow first"; exit 1; }
-	@echo "Initializing git submodules..."
-	@git submodule update --init --recursive
-	@echo "Creating ~/.config and ~/.notes directory if it doesn't exist..."
 	@mkdir -p ~/.config
-	@mkdir -p ~/.notes
 	@$(MAKE) copydotfiles
-	@command -v mise &> /dev/null || { curl https://mise.run | sh; }
+	@command -v mise &> /dev/null || { curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh; }
 	@mise install
 
 copydotfiles:
@@ -48,8 +48,8 @@ build-docker:
 		echo "Error: GITHUB_TOKEN environment variable is not set"; \
 		echo ""; \
 		echo "Usage:"; \
-		echo "  GITHUB_TOKEN=ghp_yourtoken make build-docker"; \
-		echo "  export GITHUB_TOKEN=ghp_yourtoken && make build-docker"; \
+		echo "  GITHUB_TOKEN=<your-github-token> make build-docker"; \
+		echo "  export GITHUB_TOKEN=<your-github-token> && make build-docker"; \
 		exit 1; \
 	fi
 	@echo "Building Docker image with GitHub token..."
