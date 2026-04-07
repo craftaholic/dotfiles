@@ -50,6 +50,7 @@ jobs:
           output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
+          trivyignores: '.trivyignore'
       
       - name: Parse Trivy results
         id: trivy-parse

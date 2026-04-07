@@ -1,0 +1,15 @@
+# Trivy Ignore File
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-vulnerability-ids
+
+# CVE-2025-68121: fzf 0.71.0 built with Go 1.23.12
+# Reason: Latest fzf release (v0.71.0) built with vulnerable Go version
+# Status: Waiting for fzf maintainer to release version built with Go 1.26+
+# Risk: Low - fzf is a fuzzy finder tool, crypto/tls vulnerability has minimal impact
+# Tracking: https://github.com/junegunn/fzf/issues (check for updates)
+CVE-2025-68121
+
+# Example: Ignore until specific date
+# CVE-2025-68121 exp:2026-05-01
+
+# Example: Ignore for specific packages only
+# CVE-2025-68121 pkg:fzf
