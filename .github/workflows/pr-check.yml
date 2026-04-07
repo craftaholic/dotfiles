@@ -65,10 +65,31 @@ jobs:
           
           # Create summary of top vulnerabilities (CRITICAL first, then HIGH)
           echo "## Top Vulnerabilities" > trivy-summary.md
-          {
-            jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}'
-            jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}'
-          } | head -10 >> trivy-summary.md || echo "No critical or high vulnerabilities found" >> trivy-summary.md
+          
+          # Process CRITICAL vulnerabilities first (show all CRITICAL, no limit)
+          CRITICAL_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}')
+          
+          if [ -n "$CRITICAL_VULNS" ]; then
+            echo "$CRITICAL_VULNS" >> trivy-summary.md
+            CRITICAL_COUNT=$(echo "$CRITICAL_VULNS" | wc -l)
+          else
+            CRITICAL_COUNT=0
+          fi
+          
+          # Process HIGH vulnerabilities (limit to 20 minus CRITICAL count, or all if no CRITICAL)
+          HIGH_LIMIT=$((20 - CRITICAL_COUNT))
+          if [ $HIGH_LIMIT -gt 0 ]; then
+            HIGH_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}' | head -$HIGH_LIMIT)
+            
+            if [ -n "$HIGH_VULNS" ]; then
+              echo "$HIGH_VULNS" >> trivy-summary.md
+            fi
+          fi
+          
+          # If no vulnerabilities found at all
+          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ]; then
+            echo "No critical or high vulnerabilities found" >> trivy-summary.md
+          fi
       
       - name: Generate change summary
         id: changes
