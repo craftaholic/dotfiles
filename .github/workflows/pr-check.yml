@@ -63,9 +63,12 @@ jobs:
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
           
-          # Create summary of top vulnerabilities
+          # Create summary of top vulnerabilities (CRITICAL first, then HIGH)
           echo "## Top Vulnerabilities" > trivy-summary.md
-          jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL" or .Severity=="HIGH") | "- **[\(.Severity)]** \(.VulnerabilityID): \(.PkgName) \(.InstalledVersion) - \(.Title)"' trivy-results.json | head -10 >> trivy-summary.md || echo "No critical or high vulnerabilities found" >> trivy-summary.md
+          {
+            jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "- **[\(.Severity)]** \(.VulnerabilityID): \(.PkgName) \(.InstalledVersion) - \(.Title)"' trivy-results.json
+            jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "- **[\(.Severity)]** \(.VulnerabilityID): \(.PkgName) \(.InstalledVersion) - \(.Title)"' trivy-results.json
+          } | head -10 >> trivy-summary.md || echo "No critical or high vulnerabilities found" >> trivy-summary.md
       
       - name: Generate change summary
         id: changes
@@ -134,6 +137,8 @@ jobs:
             const deletions = ${{ steps.changes.outputs.deletions }};
             
             const comment = `## 🔍 PR Check Results
+            **Commit:** \`${{ github.event.pull_request.head.sha }}\`
+            **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             
             ### 🏗️ Build Status
             ${buildStatus}
@@ -169,34 +174,12 @@ jobs:
             *Automated check by GitHub Actions*
             `;
             
-            // Find existing comment
-            const { data: comments } = await github.rest.issues.listComments({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
+              body: comment
             });
-            
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('🔍 PR Check Results')
-            );
-            
-            // Update or create comment
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: comment
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-            }
       
       - name: Upload Trivy results
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
