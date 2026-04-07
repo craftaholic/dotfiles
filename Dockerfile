@@ -18,7 +18,7 @@ ARG GIT_VERSION=1:2.47.3-0+deb13u1 \
   GCC_VERSION=4:14.2.0-1 \
   GPP_VERSION=4:14.2.0-1
 
-ARG MISE_VERSION=2026.4.5
+ARG MISE_VERSION=v2026.4.5
 
 USER root
 
@@ -45,13 +45,7 @@ USER ${USER_NAME}
 WORKDIR /home/${USER_NAME}/documents
 
 # Install mise v2026.4.5, a tool for managing multiple versions of development tools
-RUN mkdir -p /home/${USER_NAME}/.local/bin && \
-  curl -fsSL https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-x64.tar.gz \
-  | tar -xzC /tmp && \
-  mv /tmp/mise/bin/mise /home/${USER_NAME}/.local/bin/mise && \
-  chmod +x /home/${USER_NAME}/.local/bin/mise && \
-  chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.local && \
-  rm -rf /tmp/mise
+RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise MISE_VERSION=${MISE_VERSION} sh;
 
 # ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
 COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${MISE_PATH} /home/${USER_NAME}/${MISE_PATH}
@@ -75,3 +69,4 @@ RUN export PATH="/home/${USER_NAME}/.local/share/mise/shims:$PATH" && \
   timeout 60 nvim --headless -c "TSUpdate" 2>&1 || true
 
 ENTRYPOINT ["/bin/zsh"]
+
