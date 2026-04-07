@@ -1,24 +1,65 @@
 # Trivy Ignore File
 # https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-vulnerability-ids
 
+# ========================================
+# CRITICAL CVEs - Suppressed with Reason
+# ========================================
+
 # CVE-2025-68121: fzf 0.71.0 built with Go 1.23.12
-# Reason: Latest fzf release (v0.71.0) built with vulnerable Go version
+# Reason: Latest fzf release built with vulnerable Go version
 # Status: Waiting for fzf maintainer to release version built with Go 1.26+
 # Risk: Low - fzf is a fuzzy finder tool, crypto/tls vulnerability has minimal impact
-# Tracking: https://github.com/junegunn/fzf/issues (check for updates)
 CVE-2025-68121
 
+# CVE-2026-33186: grpc-go in dev tools
+# Reason: Dev tools (terragrunt/golangci-lint) built with old grpc version
+# Status: Tools commented out or waiting for updates
+# Risk: Low - dev tools only, local use
 CVE-2026-33186
-# CVE-2026-33186: terragrunt/golangci-lint latest is still built with Go 1.23.12
-# Reason: Latest terragrunt/golangci-lint release built with vulnerable Go version
-# Status: Waiting for maintainer to release version built with Go 1.26+
-# Risk: Low - these tools are dev tool locally, this vulnerability has minimal impact
 
+# ========================================
+# HIGH CVEs - System Libraries (Debian)
+# ========================================
+# Status: Debian stable maintainers explicitly marked "no DSA" (no backport planned)
+# All fixes available only in sid/unstable, not in stable-slim (bookworm)
 
+# CVE-2026-25210: libexpat1 2.7.1-2
+# Reason: Integer overflow in buffer reallocation - no fix in Debian stable
+# Fixed in: sid 2.7.5-1 (unstable only)
+# Risk: High (potential RCE), but requires parsing untrusted XML
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-25210
 
+# CVE-2026-27135: libnghttp2-14 1.64.0-1.1  
+# Reason: HTTP/2 DoS via malformed frames - no fix in Debian stable
+# Fixed in: sid 1.68.1-1 (unstable only)
+# Risk: Medium (DoS only, requires malformed HTTP/2 after session termination)
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-27135
 
-# Example: Ignore until specific date
-# CVE-2025-68121 exp:2026-05-01
+# CVE-2026-29111: libsystemd0/libudev1 257.9-1~deb13u1
+# Reason: IPC API vulnerability - no fix in Debian stable
+# Fixed in: sid 260.1-1 (unstable only)
+# Risk: Medium (requires systemd as PID 1, rare in containers)
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-29111
 
-# Example: Ignore for specific packages only
-# CVE-2025-68121 pkg:fzf
+# CVE-2025-69720: libtinfo6 6.5+20250216-2
+# Reason: Buffer overflow in infocmp tool - no fix in Debian stable  
+# Fixed in: sid 6.6+20251231-1 (unstable only)
+# Risk: Low (affects CLI tool `infocmp`, not library runtime)
+# Status: Debian marked as "postponed"
+CVE-2025-69720
+
+# ========================================
+# HIGH CVEs - Kernel Headers (NO RISK)
+# ========================================
+# Package: linux-libc-dev (kernel headers only, no runtime code)
+# Reason: Header files for compilation, not actual kernel code
+# Risk: None - containers use host kernel, not these headers
+
+CVE-2013-7445  # kernel: GEM objects memory exhaustion (2013)
+CVE-2019-19449 # kernel: f2fs slab-out-of-bounds (2019)
+CVE-2019-19814 # kernel: f2fs out-of-bounds write (2019)
+CVE-2021-3847  # kernel: privilege escalation (2021)
+CVE-2021-3864  # kernel: dumpable setting issue (2021)
