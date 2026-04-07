@@ -18,9 +18,9 @@ CVE-2025-68121
 CVE-2026-33186
 
 # ========================================
-# HIGH CVEs - Go Stdlib (Fixed in 1.26.1)
+# HIGH CVEs - Go Stdlib v1.23.12 (Fixed in 1.26.1)
 # ========================================
-# Status: Go 1.26.1 includes fixes, but older tools built with Go 1.26.0/1.23.12 still show these
+# Status: Go 1.26.1 includes fixes, but older tools built with Go 1.23.12 still show these
 
 # CVE-2026-27137: crypto/x509 email constraints (stdlib v1.26.0)
 # Reason: Fixed in Go 1.26.1 - detected in tools built with Go 1.26.0
@@ -33,6 +33,30 @@ CVE-2026-27137
 # Risk: Low - incorrect URL parsing of IPv6 literals
 # Status: Wait for tool maintainers to rebuild with Go 1.26.1+
 CVE-2026-25679
+
+# CVE-2025-61729: crypto/x509 DoS (stdlib v1.23.12)
+# Reason: Excessive resource consumption via crafted certificate
+# Risk: Low - requires processing malicious certificates
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61729
+
+# CVE-2025-61728: archive/zip CPU exhaustion (stdlib v1.23.12)
+# Reason: Excessive CPU when building archive index
+# Risk: Low - requires processing malicious ZIP files
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61728
+
+# CVE-2025-61726: net/url memory exhaustion (stdlib v1.23.12)
+# Reason: Memory exhaustion in query parameter parsing
+# Risk: Low - requires processing malicious URLs
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61726
+
+# CVE-2025-58183: archive/tar unbounded allocation (stdlib v1.23.12)
+# Reason: Unbounded allocation when parsing GNU sparse map
+# Risk: Low - requires processing malicious TAR files
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-58183
 
 # ========================================
 # HIGH CVEs - Go Dependencies
@@ -125,18 +149,39 @@ CVE-2025-69720
 # Reason: Header files for compilation, not actual kernel code
 # Risk: None - containers use host kernel, not these headers
 
+# Ancient CVEs (2013-2021)
 CVE-2013-7445  # kernel: GEM objects memory exhaustion (2013)
 CVE-2019-19449 # kernel: f2fs slab-out-of-bounds (2019)
 CVE-2019-19814 # kernel: f2fs out-of-bounds write (2019)
 CVE-2021-3847  # kernel: privilege escalation (2021)
 CVE-2021-3864  # kernel: dumpable setting issue (2021)
-CVE-2026-31402 # kernel: nfsd heap overflow (2026)
-CVE-2026-23455 # kernel: netfilter h323 check (2026)
-CVE-2026-23450 # kernel: net/smc NULL deref (2026)
-CVE-2026-23392 # kernel: netfilter nf_tables RCU (2026)
-CVE-2026-23375 # kernel: mm THP deny (2026)
-CVE-2026-23270 # kernel: traffic control UAF (2026)
-CVE-2026-23243 # kernel: RDMA umad (2026)
-CVE-2026-23231 # kernel: nf_tables UAF (2026)
-CVE-2026-23227 # kernel: drm/exynos vidi (2026)
-CVE-2026-23226 # kernel: ksmbd chann_lock (2026)
+
+# 2025 CVEs
+CVE-2025-38421 # kernel: amd pmf device managed allocations
+CVE-2025-38584 # kernel: padata UAF
+CVE-2025-38627 # kernel: f2fs compress UAF
+CVE-2025-38636 # kernel: rv monitors tracepoints
+CVE-2025-39859 # kernel: ptp ocp UAF watchdog
+CVE-2025-39862 # kernel: wifi mt76 list corruption
+CVE-2025-39958 # kernel: iommu s390 surprise removal
+CVE-2025-40064 # kernel: smc UAF pnet_find_base_ndev
+CVE-2025-40135 # kernel: ipv6 RCU ip6_xmit
+CVE-2025-40158 # kernel: ipv6 RCU ip6_output
+CVE-2025-40168 # kernel: smc dst_get prfx_match
+CVE-2025-71152 # kernel: net dsa conduit reference
+CVE-2025-71221 # kernel: dmaengine mmp_pdma race condition
+
+# 2026 CVEs
+CVE-2026-23102 # kernel: SVE context restoration DoS
+CVE-2026-23171 # kernel: bonding module UAF
+CVE-2026-23208 # kernel: ALSA usb-audio excessive frames
+CVE-2026-23226 # kernel: ksmbd chann_lock
+CVE-2026-23227 # kernel: drm/exynos vidi
+CVE-2026-23231 # kernel: nf_tables UAF
+CVE-2026-23243 # kernel: RDMA umad
+CVE-2026-23270 # kernel: traffic control UAF
+CVE-2026-23375 # kernel: mm THP deny
+CVE-2026-23392 # kernel: netfilter nf_tables RCU
+CVE-2026-23450 # kernel: net/smc NULL deref
+CVE-2026-23455 # kernel: netfilter h323 check
+CVE-2026-31402 # kernel: nfsd heap overflow
