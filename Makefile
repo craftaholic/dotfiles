@@ -48,8 +48,8 @@ build-docker:
 		echo "Error: GITHUB_TOKEN environment variable is not set"; \
 		echo ""; \
 		echo "Usage:"; \
-		echo "  GITHUB_TOKEN=ghp_yourtoken make build-docker"; \
-		echo "  export GITHUB_TOKEN=ghp_yourtoken && make build-docker"; \
+		echo "  GITHUB_TOKEN=<your-github-token> make build-docker"; \
+		echo "  export GITHUB_TOKEN=<your-github-token> && make build-docker"; \
 		exit 1; \
 	fi
 	@echo "Building Docker image with GitHub token..."
