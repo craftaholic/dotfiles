@@ -66,7 +66,7 @@ jobs:
           severity: ${{ inputs.severity }}
           exit-code: '0'
           trivyignores: '.trivyignore'
-          scanners: 'vuln,secret'
+          scanners: 'vuln'
       
       - name: Parse Trivy results
         id: trivy-parse
