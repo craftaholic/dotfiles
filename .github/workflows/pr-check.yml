@@ -51,23 +51,34 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
           trivyignores: '.trivyignore'
+          scanners: 'vuln,secret'
       
       - name: Parse Trivy results
         id: trivy-parse
         run: |
-          # Parse Trivy JSON output
           CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
           HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
           MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          SECRETS=$(jq '[.Results[]?.Secrets[]?] | length' trivy-results.json)
           
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+          echo "secrets=$SECRETS" >> $GITHUB_OUTPUT
           
-          # Create summary of top vulnerabilities (CRITICAL first, then HIGH)
-          echo "## Top Vulnerabilities" > trivy-summary.md
+          echo "## Security Findings" > trivy-summary.md
           
-          # Process CRITICAL vulnerabilities first (show all CRITICAL, no limit)
+          if [ "$SECRETS" -gt 0 ]; then
+            echo "" >> trivy-summary.md
+            echo "### 🔑 Secrets Found: $SECRETS" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+            jq -r '.Results[]?.Secrets[]? | "- **\(.RuleID)**: \(.Title) in `\(.Match)`"' trivy-results.json | head -10 >> trivy-summary.md
+            echo "" >> trivy-summary.md
+          fi
+          
+          echo "### 🐛 Vulnerabilities" >> trivy-summary.md
+          echo "" >> trivy-summary.md
+          
           CRITICAL_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}')
           
           if [ -n "$CRITICAL_VULNS" ]; then
@@ -77,7 +88,6 @@ jobs:
             CRITICAL_COUNT=0
           fi
           
-          # Process HIGH vulnerabilities (limit to 20 minus CRITICAL count, or all if no CRITICAL)
           HIGH_LIMIT=$((20 - CRITICAL_COUNT))
           if [ $HIGH_LIMIT -gt 0 ]; then
             HIGH_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}' | head -$HIGH_LIMIT)
@@ -87,9 +97,8 @@ jobs:
             fi
           fi
           
-          # If no vulnerabilities found at all
-          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ]; then
-            echo "No critical or high vulnerabilities found" >> trivy-summary.md
+          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ] && [ "$SECRETS" -eq 0 ]; then
+            echo "No security issues found" >> trivy-summary.md
           fi
       
 
@@ -107,11 +116,15 @@ jobs:
             const critical = ${{ steps.trivy-parse.outputs.critical }};
             const high = ${{ steps.trivy-parse.outputs.high }};
             const medium = ${{ steps.trivy-parse.outputs.medium }};
+            const secrets = ${{ steps.trivy-parse.outputs.secrets }};
             
-            let securityStatus = '✅ No critical vulnerabilities';
+            let securityStatus = '✅ No security issues';
             let securityEmoji = '🟢';
             
-            if (critical > 0) {
+            if (secrets > 0) {
+              securityStatus = `🔴 ${secrets} secret(s) found`;
+              securityEmoji = '🔴';
+            } else if (critical > 0) {
               securityStatus = `🔴 ${critical} critical vulnerabilities found`;
               securityEmoji = '🔴';
             } else if (high > 0) {
@@ -132,7 +145,8 @@ jobs:
             ### ${securityEmoji} Security Scan
             ${securityStatus}
             
-            **Vulnerability Summary:**
+            **Security Summary:**
+            - 🔑 Secrets: ${secrets}
             - 🔴 Critical: ${critical}
             - 🟠 High: ${high}
             - 🟡 Medium: ${medium}
@@ -158,8 +172,13 @@ jobs:
           path: trivy-results.json
           retention-days: 30
       
-      - name: Fail if critical vulnerabilities found
-        if: steps.trivy-parse.outputs.critical > 0
+      - name: Fail if secrets or critical vulnerabilities found
+        if: steps.trivy-parse.outputs.secrets > 0 || steps.trivy-parse.outputs.critical > 0
         run: |
-          echo "❌ Critical vulnerabilities found! Please review the security scan results."
+          if [ "${{ steps.trivy-parse.outputs.secrets }}" -gt 0 ]; then
+            echo "❌ Secrets found in image! Please remove secrets and use environment variables or secrets management."
+          fi
+          if [ "${{ steps.trivy-parse.outputs.critical }}" -gt 0 ]; then
+            echo "❌ Critical vulnerabilities found! Please review the security scan results."
+          fi
           exit 1
