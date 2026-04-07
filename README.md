@@ -13,15 +13,8 @@ This project can be installed either directly on your local machine or used thro
 ├── Makefile                                # GNU Make build automation
 ├── README.md
 ├── aerospace                               # macOS window manager configuration
-├── claude                                  # Claude AI configuration and context
 ├── nvim                                    # Neovim configuration
-├── packages                                # Contains the devbox configuration
-│   └── .local
-│       └── share
-│           └── devbox
-│               └── global
-│                   └── default
-│                       └── devbox.json     # Maintain all your binaries in declarative way
+├── packages                                # Contains the binaries configuration in declarative (Using mise)
 ├── tmux                                    # Tmux configuration
 ├── wezterm                                 # Wezterm terminal configuration
 └── zsh                                     # Zsh shell configuration
