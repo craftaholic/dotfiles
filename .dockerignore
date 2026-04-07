@@ -14,4 +14,4 @@ README.md
 .gitignore
 
 # Ignore Java development tools for reduce Docker image size
-.bin/.local/devtools/java
+bin/.local/devtools/java

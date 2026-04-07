@@ -1,5 +1,6 @@
 return {
   "hrsh7th/nvim-cmp",
+  commit = "da88697d7f45d16852c6b2769dc52387d1ddc45f",
   version = false, -- last release is way too old
   event = "InsertEnter",
   dependencies = {

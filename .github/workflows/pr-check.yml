@@ -1,0 +1,213 @@
+name: PR Build & Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+env:
+  DOCKER_IMAGE: devcontainer
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run Trivy vulnerability scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+      
+      - name: Parse Trivy results
+        id: trivy-parse
+        run: |
+          # Parse Trivy JSON output
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+          
+          # Create summary of top vulnerabilities
+          echo "## Top Vulnerabilities" > trivy-summary.md
+          jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL" or .Severity=="HIGH") | "- **[\(.Severity)]** \(.VulnerabilityID): \(.PkgName) \(.InstalledVersion) - \(.Title)"' trivy-results.json | head -10 >> trivy-summary.md || echo "No critical or high vulnerabilities found" >> trivy-summary.md
+      
+      - name: Generate change summary
+        id: changes
+        run: |
+          # Get PR stats
+          FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+          INSERTIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{add+=$1} END {print add}')
+          DELETIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{del+=$2} END {print del}')
+          
+          echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
+          echo "insertions=$INSERTIONS" >> $GITHUB_OUTPUT
+          echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
+          
+          # Generate file change summary
+          echo "## Changed Files" > changes-summary.md
+          git diff --name-status origin/${{ github.base_ref }}...HEAD | head -20 >> changes-summary.md
+          
+          if [ $(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l) -gt 20 ]; then
+            echo "" >> changes-summary.md
+            echo "... and $((FILES_CHANGED - 20)) more files" >> changes-summary.md
+          fi
+      
+      - name: Get commit messages
+        id: commits
+        run: |
+          echo "## Recent Commits" > commits-summary.md
+          git log origin/${{ github.base_ref }}..HEAD --pretty=format:"- %s (%an)" --no-merges | head -10 >> commits-summary.md
+      
+      - name: Create PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Read summaries
+            const trivySummary = fs.readFileSync('trivy-summary.md', 'utf8');
+            const changesSummary = fs.readFileSync('changes-summary.md', 'utf8');
+            const commitsSummary = fs.readFileSync('commits-summary.md', 'utf8');
+            
+            // Build status
+            const buildStatus = '✅ Build successful';
+            
+            // Security status
+            const critical = ${{ steps.trivy-parse.outputs.critical }};
+            const high = ${{ steps.trivy-parse.outputs.high }};
+            const medium = ${{ steps.trivy-parse.outputs.medium }};
+            
+            let securityStatus = '✅ No critical vulnerabilities';
+            let securityEmoji = '🟢';
+            
+            if (critical > 0) {
+              securityStatus = `🔴 ${critical} critical vulnerabilities found`;
+              securityEmoji = '🔴';
+            } else if (high > 0) {
+              securityStatus = `🟠 ${high} high vulnerabilities found`;
+              securityEmoji = '🟠';
+            } else if (medium > 0) {
+              securityStatus = `🟡 ${medium} medium vulnerabilities found`;
+              securityEmoji = '🟡';
+            }
+            
+            // Stats
+            const filesChanged = ${{ steps.changes.outputs.files_changed }};
+            const insertions = ${{ steps.changes.outputs.insertions }};
+            const deletions = ${{ steps.changes.outputs.deletions }};
+            
+            const comment = `## 🔍 PR Check Results
+            
+            ### 🏗️ Build Status
+            ${buildStatus}
+            
+            ### ${securityEmoji} Security Scan
+            ${securityStatus}
+            
+            **Vulnerability Summary:**
+            - 🔴 Critical: ${critical}
+            - 🟠 High: ${high}
+            - 🟡 Medium: ${medium}
+            
+            ${trivySummary}
+            
+            <details>
+            <summary>📊 Change Summary</summary>
+            
+            **Statistics:**
+            - Files changed: ${filesChanged}
+            - Insertions: +${insertions}
+            - Deletions: -${deletions}
+            
+            ${changesSummary}
+            </details>
+            
+            <details>
+            <summary>📝 Commits</summary>
+            
+            ${commitsSummary}
+            </details>
+            
+            ---
+            *Automated check by GitHub Actions*
+            `;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🔍 PR Check Results')
+            );
+            
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+      
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-results
+          path: trivy-results.json
+          retention-days: 30
+      
+      - name: Fail if critical vulnerabilities found
+        if: steps.trivy-parse.outputs.critical > 0
+        run: |
+          echo "❌ Critical vulnerabilities found! Please review the security scan results."
+          exit 1

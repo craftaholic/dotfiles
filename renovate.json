@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Neovim plugin commits in Lua files",
+      "fileMatch": [
+        "^nvim/.config/nvim/lua/.+\\.lua$"
+      ],
+      "matchStrings": [
+        "\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "loose"
+    }
+  ],
+  "mise": {
+    "fileMatch": [
+      "^packages/.config/mise/config\\.toml$"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Group all Neovim plugin updates into one PR",
+      "matchManagers": ["regex"],
+      "matchFileNames": ["nvim/.config/nvim/lua/**/*.lua"],
+      "groupName": "neovim plugins",
+      "schedule": ["every weekend"]
+    },
+    {
+      "description": "Group mise tool updates into one PR",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["packages/.config/mise/config.toml"],
+      "groupName": "mise tools",
+      "schedule": ["every weekend"]
+    }
+  ]
+}
