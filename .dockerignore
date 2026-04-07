@@ -1,7 +1,17 @@
-.gitignore
-README.md
-LICENSE
 .DS_Store
 *.swp
 *.swo
 *~
+
+.claude/*
+.opencode/*
+
+LICENSE
+Dockerfile
+README.md
+.git
+.github
+.gitignore
+
+# Ignore Java development tools for reduce Docker image size
+.bin/.local/devtools/java

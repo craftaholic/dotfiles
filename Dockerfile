@@ -46,7 +46,6 @@ COPY --chown=${USER_NAME}:${USER_NAME} . dotfiles/
 
 # Copy dotfiles and set up the environment
 RUN cd dotfiles \
-  && git config --global --add safe.directory /home/${USER_NAME}/dotfiles \
   && make copydotfiles
 
 # Pre-install Neovim plugins and treesitter parsers
