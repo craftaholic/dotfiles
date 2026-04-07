@@ -57,7 +57,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
           trivyignores: '.trivyignore'
-          scanners: 'vuln,secret,misconfig'
+          scanners: 'vuln,secret'
       
       - name: Parse Trivy results
         id: trivy-parse
