@@ -9,68 +9,11 @@ env:
   DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/devcontainer
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-      image-tags: ${{ steps.meta.outputs.tags }}
-      image-labels: ${{ steps.meta.outputs.labels }}
-    
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
-        with:
-          images: ${{ env.DOCKER_IMAGE }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest
-
-      - name: Build Docker image
-        id: build
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
-        with:
-          context: .
-          push: false
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          secrets: |
-            github_token=${{ secrets.GITHUB_TOKEN }}
-
-  security-scan:
-    needs: build
-    uses: ./.github/workflows/security-scan.yml
-    permissions:
-      contents: read
-      security-events: write
-    with:
-      image-ref: ${{ needs.build.outputs.image-tags }}
-      severity: 'CRITICAL,HIGH,MEDIUM'
-      fail-on-severity: 'CRITICAL,HIGH'
-
-  push:
-    needs: [build, security-scan]
-    runs-on: ubuntu-latest
-    if: always()
     outputs:
       digest: ${{ steps.push.outputs.digest }}
+      image-ref: ${{ env.DOCKER_IMAGE }}@${{ steps.push.outputs.digest }}
     
     permissions:
       contents: read
@@ -95,14 +38,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           push: true
-          tags: ${{ needs.build.outputs.image-tags }}
-          labels: ${{ needs.build.outputs.image-labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -116,8 +70,19 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+  security-scan:
+    needs: build-and-push
+    uses: ./.github/workflows/security-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      image-ref: ${{ needs.build-and-push.outputs.image-ref }}
+      severity: 'CRITICAL,HIGH,MEDIUM'
+      fail-on-severity: 'CRITICAL,HIGH'
+
   update-release:
-    needs: [build, security-scan, push]
+    needs: [build-and-push, security-scan]
     runs-on: ubuntu-latest
     if: always() && github.event_name == 'release'
     
