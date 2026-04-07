@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates=${CA_CERTIFICATES_VERSION} \
   gcc=${GCC_VERSION} \
   g++=${GPP_VERSION} \
+  && apt-get upgrade -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 RUN adduser --disabled-password --gecos "" $USER_NAME \
