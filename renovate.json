@@ -13,6 +13,31 @@
       ],
       "datasourceTemplate": "github-tags",
       "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Debian apt packages in Dockerfile",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "ARG\\s+(?<depName>[A-Z_]+)=(?<currentValue>[^\\s\\\\]+)"
+      ],
+      "datasourceTemplate": "debian",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update GitHub release binaries in Dockerfile",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "ARG\\s+MISE_VERSION=(?<currentValue>[^\\s\\\\]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "jdx/mise",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
     }
   ],
   "mise": {
@@ -33,6 +58,13 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["packages/.config/mise/config.toml"],
       "groupName": "mise tools",
+      "schedule": ["every weekend"]
+    },
+    {
+      "description": "Group Dockerfile dependency updates into one PR",
+      "matchManagers": ["regex"],
+      "matchFileNames": ["Dockerfile"],
+      "groupName": "dockerfile dependencies",
       "schedule": ["every weekend"]
     }
   ]
