@@ -41,11 +41,10 @@ RUN adduser --disabled-password --gecos "" $USER_NAME \
   && usermod -aG sudo $USER_NAME \
   && echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER_NAME
 
+RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise MISE_VERSION=${MISE_VERSION} sh;
+
 USER ${USER_NAME}
 WORKDIR /home/${USER_NAME}/documents
-
-# Install mise v2026.4.5, a tool for managing multiple versions of development tools
-RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise MISE_VERSION=${MISE_VERSION} sh;
 
 # ✅ Copy ONLY the lockfiles/configs first — cache busts only when these change
 COPY --chown=${USER_NAME}:${USER_NAME} ./packages/${MISE_PATH} /home/${USER_NAME}/${MISE_PATH}
