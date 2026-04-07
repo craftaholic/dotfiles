@@ -28,7 +28,7 @@ python = "3.14.2"
 # k3d = "5.8.3"
 
 ### Utilities
-awscli = { version = "2.33.13", symlink_bins = "true" }
+awscli = { version = "2.34.25", symlink_bins = "true" }
 jq = "1.8.1"
 yq = "4.52.5"
 
