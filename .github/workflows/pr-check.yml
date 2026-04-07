@@ -16,10 +16,14 @@ env:
   DOCKER_IMAGE: devcontainer
 
 jobs:
-  build:
+  build-and-scan:
     runs-on: ubuntu-latest
     outputs:
-      image-ref: ${{ steps.image-ref.outputs.ref }}
+      scan-passed: ${{ steps.check-threshold.outputs.passed }}
+      critical-count: ${{ steps.trivy-parse.outputs.critical }}
+      high-count: ${{ steps.trivy-parse.outputs.high }}
+      medium-count: ${{ steps.trivy-parse.outputs.medium }}
+      scan-summary: ${{ steps.generate-summary.outputs.markdown }}
     
     steps:
       - name: Checkout code
@@ -43,23 +47,151 @@ jobs:
           secrets: |
             github_token=${{ secrets.GITHUB_TOKEN }}
       
-      - name: Set image reference
-        id: image-ref
-        run: echo "ref=${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-
-  security-scan:
-    needs: build
-    uses: ./.github/workflows/security-scan.yml
-    permissions:
-      contents: read
-      security-events: write
-    with:
-      image-ref: ${{ needs.build.outputs.image-ref }}
-      severity: 'CRITICAL,HIGH,MEDIUM'
-      fail-on-severity: 'CRITICAL'
+      - name: Run Trivy vulnerability scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+          trivyignores: '.trivyignore'
+          scanners: 'vuln,secret,misconfig'
+      
+      - name: Parse Trivy results
+        id: trivy-parse
+        run: |
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          SECRETS=$(jq '[.Results[]?.Secrets[]?] | length' trivy-results.json)
+          MISCONFIG_CRITICAL=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
+          MISCONFIG_HIGH=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          MISCONFIG_MEDIUM=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          MISCONFIG_TOTAL=$((MISCONFIG_CRITICAL + MISCONFIG_HIGH + MISCONFIG_MEDIUM))
+          
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+          echo "secrets=$SECRETS" >> $GITHUB_OUTPUT
+          echo "misconfig_total=$MISCONFIG_TOTAL" >> $GITHUB_OUTPUT
+          echo "misconfig_critical=$MISCONFIG_CRITICAL" >> $GITHUB_OUTPUT
+          echo "misconfig_high=$MISCONFIG_HIGH" >> $GITHUB_OUTPUT
+          echo "misconfig_medium=$MISCONFIG_MEDIUM" >> $GITHUB_OUTPUT
+      
+      - name: Check severity threshold
+        id: check-threshold
+        run: |
+          CRITICAL=${{ steps.trivy-parse.outputs.critical }}
+          HIGH=${{ steps.trivy-parse.outputs.high }}
+          SECRETS=${{ steps.trivy-parse.outputs.secrets }}
+          MISCONFIG_CRITICAL=${{ steps.trivy-parse.outputs.misconfig_critical }}
+          
+          PASSED=true
+          
+          if [ "$CRITICAL" -gt 0 ] || [ "$MISCONFIG_CRITICAL" -gt 0 ] || [ "$SECRETS" -gt 0 ]; then
+            PASSED=false
+          fi
+          
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+      
+      - name: Generate summary
+        id: generate-summary
+        run: |
+          CRITICAL=${{ steps.trivy-parse.outputs.critical }}
+          HIGH=${{ steps.trivy-parse.outputs.high }}
+          MEDIUM=${{ steps.trivy-parse.outputs.medium }}
+          SECRETS=${{ steps.trivy-parse.outputs.secrets }}
+          MISCONFIG_TOTAL=${{ steps.trivy-parse.outputs.misconfig_total }}
+          MISCONFIG_CRITICAL=${{ steps.trivy-parse.outputs.misconfig_critical }}
+          MISCONFIG_HIGH=${{ steps.trivy-parse.outputs.misconfig_high }}
+          MISCONFIG_MEDIUM=${{ steps.trivy-parse.outputs.misconfig_medium }}
+          PASSED=${{ steps.check-threshold.outputs.passed }}
+          
+          cat << 'EOF' > trivy-summary.md
+          ## 🔒 Security Scan Results
+          
+          EOF
+          
+          if [ "$PASSED" = "true" ]; then
+            echo "**Status**: ✅ PASSED | **Scanned**: $(date -u +"%Y-%m-%d %H:%M UTC")" >> trivy-summary.md
+          else
+            echo "**Status**: ⚠️ ISSUES FOUND | **Scanned**: $(date -u +"%Y-%m-%d %H:%M UTC")" >> trivy-summary.md
+          fi
+          
+          echo "" >> trivy-summary.md
+          echo "### Vulnerability Summary" >> trivy-summary.md
+          echo "- 🔴 Critical: $CRITICAL" >> trivy-summary.md
+          echo "- 🟠 High: $HIGH" >> trivy-summary.md
+          echo "- 🟡 Medium: $MEDIUM" >> trivy-summary.md
+          echo "" >> trivy-summary.md
+          
+          if [ "$SECRETS" -gt 0 ]; then
+            echo "### 🔑 Secrets Found: $SECRETS" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+            jq -r '.Results[]?.Secrets[]? | "- **\(.RuleID)**: \(.Title) in `\(.Match)`"' trivy-results.json | head -10 >> trivy-summary.md
+            echo "" >> trivy-summary.md
+          fi
+          
+          if [ "$MISCONFIG_TOTAL" -gt 0 ]; then
+            echo "### ⚙️ Misconfigurations: $MISCONFIG_TOTAL (🔴 $MISCONFIG_CRITICAL / 🟠 $MISCONFIG_HIGH / 🟡 $MISCONFIG_MEDIUM)" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+            
+            CRITICAL_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL") | "- **[CRITICAL]** \(.ID): \(.Title)"' trivy-results.json | head -5)
+            if [ -n "$CRITICAL_MISCONFIG" ]; then
+              echo "$CRITICAL_MISCONFIG" >> trivy-summary.md
+            fi
+            
+            HIGH_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH") | "- **[HIGH]** \(.ID): \(.Title)"' trivy-results.json | head -5)
+            if [ -n "$HIGH_MISCONFIG" ]; then
+              echo "$HIGH_MISCONFIG" >> trivy-summary.md
+            fi
+            echo "" >> trivy-summary.md
+          fi
+          
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "### 🐛 Top Vulnerabilities" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+            
+            CRITICAL_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}')
+            
+            if [ -n "$CRITICAL_VULNS" ]; then
+              echo "$CRITICAL_VULNS" >> trivy-summary.md
+              CRITICAL_COUNT=$(echo "$CRITICAL_VULNS" | wc -l)
+            else
+              CRITICAL_COUNT=0
+            fi
+            
+            HIGH_LIMIT=$((20 - CRITICAL_COUNT))
+            if [ $HIGH_LIMIT -gt 0 ]; then
+              HIGH_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}' | head -$HIGH_LIMIT)
+              
+              if [ -n "$HIGH_VULNS" ]; then
+                echo "$HIGH_VULNS" >> trivy-summary.md
+              fi
+            fi
+          fi
+          
+          if [ "$CRITICAL" -eq 0 ] && [ "$HIGH" -eq 0 ] && [ "$MEDIUM" -eq 0 ] && [ "$SECRETS" -eq 0 ] && [ "$MISCONFIG_TOTAL" -eq 0 ]; then
+            echo "✅ No security issues found" >> trivy-summary.md
+          fi
+          
+          SUMMARY=$(cat trivy-summary.md)
+          echo "markdown<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always()
+        with:
+          name: trivy-results-${{ github.run_id }}
+          path: trivy-results.json
+          retention-days: 30
 
   report:
-    needs: [build, security-scan]
+    needs: build-and-scan
     runs-on: ubuntu-latest
     if: always()
     
@@ -69,11 +201,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const buildStatus = '${{ needs.build.result }}' === 'success' ? '✅ Build successful' : '❌ Build failed';
-            const scanPassed = '${{ needs.security-scan.outputs.scan-passed }}' === 'true';
-            const critical = ${{ needs.security-scan.outputs.critical-count }};
-            const high = ${{ needs.security-scan.outputs.high-count }};
-            const medium = ${{ needs.security-scan.outputs.medium-count }};
+            const buildStatus = '${{ needs.build-and-scan.result }}' === 'success' ? '✅ Build successful' : '❌ Build failed';
+            const scanPassed = '${{ needs.build-and-scan.outputs.scan-passed }}' === 'true';
+            const critical = ${{ needs.build-and-scan.outputs.critical-count }};
+            const high = ${{ needs.build-and-scan.outputs.high-count }};
+            const medium = ${{ needs.build-and-scan.outputs.medium-count }};
             
             let securityStatus = '✅ No security issues';
             let securityEmoji = '🟢';
@@ -89,7 +221,7 @@ jobs:
               securityEmoji = '🟡';
             }
             
-            const scanSummary = `${{ needs.security-scan.outputs.scan-summary }}`;
+            const scanSummary = `${{ needs.build-and-scan.outputs.scan-summary }}`;
             
             const comment = `## 🔍 PR Check Results
             **Commit:** \`${{ github.event.pull_request.head.sha }}\`
@@ -115,7 +247,7 @@ jobs:
             });
       
       - name: Fail if critical issues found
-        if: needs.security-scan.outputs.scan-passed != 'true'
+        if: needs.build-and-scan.outputs.scan-passed != 'true'
         run: |
           echo "❌ Critical vulnerabilities or secrets found! Please review the security scan results."
           exit 1
