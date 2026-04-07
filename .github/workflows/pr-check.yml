@@ -51,7 +51,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
           trivyignores: '.trivyignore'
-          scanners: 'vuln,secret'
+          scanners: 'vuln,secret,misconfig'
       
       - name: Parse Trivy results
         id: trivy-parse
@@ -60,11 +60,19 @@ jobs:
           HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
           MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
           SECRETS=$(jq '[.Results[]?.Secrets[]?] | length' trivy-results.json)
+          MISCONFIG_CRITICAL=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
+          MISCONFIG_HIGH=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          MISCONFIG_MEDIUM=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          MISCONFIG_TOTAL=$((MISCONFIG_CRITICAL + MISCONFIG_HIGH + MISCONFIG_MEDIUM))
           
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
           echo "secrets=$SECRETS" >> $GITHUB_OUTPUT
+          echo "misconfig_total=$MISCONFIG_TOTAL" >> $GITHUB_OUTPUT
+          echo "misconfig_critical=$MISCONFIG_CRITICAL" >> $GITHUB_OUTPUT
+          echo "misconfig_high=$MISCONFIG_HIGH" >> $GITHUB_OUTPUT
+          echo "misconfig_medium=$MISCONFIG_MEDIUM" >> $GITHUB_OUTPUT
           
           echo "## Security Findings" > trivy-summary.md
           
@@ -73,6 +81,23 @@ jobs:
             echo "### 🔑 Secrets Found: $SECRETS" >> trivy-summary.md
             echo "" >> trivy-summary.md
             jq -r '.Results[]?.Secrets[]? | "- **\(.RuleID)**: \(.Title) in `\(.Match)`"' trivy-results.json | head -10 >> trivy-summary.md
+            echo "" >> trivy-summary.md
+          fi
+          
+          if [ "$MISCONFIG_TOTAL" -gt 0 ]; then
+            echo "" >> trivy-summary.md
+            echo "### ⚙️ Misconfigurations: $MISCONFIG_TOTAL" >> trivy-summary.md
+            echo "" >> trivy-summary.md
+            
+            CRITICAL_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL") | "- **[CRITICAL]** \(.ID): \(.Title)"' trivy-results.json | head -5)
+            if [ -n "$CRITICAL_MISCONFIG" ]; then
+              echo "$CRITICAL_MISCONFIG" >> trivy-summary.md
+            fi
+            
+            HIGH_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH") | "- **[HIGH]** \(.ID): \(.Title)"' trivy-results.json | head -5)
+            if [ -n "$HIGH_MISCONFIG" ]; then
+              echo "$HIGH_MISCONFIG" >> trivy-summary.md
+            fi
             echo "" >> trivy-summary.md
           fi
           
@@ -97,7 +122,7 @@ jobs:
             fi
           fi
           
-          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ] && [ "$SECRETS" -eq 0 ]; then
+          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ] && [ "$SECRETS" -eq 0 ] && [ "$MISCONFIG_TOTAL" -eq 0 ]; then
             echo "No security issues found" >> trivy-summary.md
           fi
       
@@ -117,6 +142,10 @@ jobs:
             const high = ${{ steps.trivy-parse.outputs.high }};
             const medium = ${{ steps.trivy-parse.outputs.medium }};
             const secrets = ${{ steps.trivy-parse.outputs.secrets }};
+            const misconfigTotal = ${{ steps.trivy-parse.outputs.misconfig_total }};
+            const misconfigCritical = ${{ steps.trivy-parse.outputs.misconfig_critical }};
+            const misconfigHigh = ${{ steps.trivy-parse.outputs.misconfig_high }};
+            const misconfigMedium = ${{ steps.trivy-parse.outputs.misconfig_medium }};
             
             let securityStatus = '✅ No security issues';
             let securityEmoji = '🟢';
@@ -124,14 +153,14 @@ jobs:
             if (secrets > 0) {
               securityStatus = `🔴 ${secrets} secret(s) found`;
               securityEmoji = '🔴';
-            } else if (critical > 0) {
-              securityStatus = `🔴 ${critical} critical vulnerabilities found`;
+            } else if (critical > 0 || misconfigCritical > 0) {
+              securityStatus = `🔴 Critical issues found`;
               securityEmoji = '🔴';
-            } else if (high > 0) {
-              securityStatus = `🟠 ${high} high vulnerabilities found`;
+            } else if (high > 0 || misconfigHigh > 0) {
+              securityStatus = `🟠 High severity issues found`;
               securityEmoji = '🟠';
-            } else if (medium > 0) {
-              securityStatus = `🟡 ${medium} medium vulnerabilities found`;
+            } else if (medium > 0 || misconfigMedium > 0) {
+              securityStatus = `🟡 Medium severity issues found`;
               securityEmoji = '🟡';
             }
             
@@ -147,9 +176,8 @@ jobs:
             
             **Security Summary:**
             - 🔑 Secrets: ${secrets}
-            - 🔴 Critical: ${critical}
-            - 🟠 High: ${high}
-            - 🟡 Medium: ${medium}
+            - ⚙️ Misconfigurations: ${misconfigTotal} (🔴 ${misconfigCritical} / 🟠 ${misconfigHigh} / 🟡 ${misconfigMedium})
+            - 🐛 Vulnerabilities: 🔴 ${critical} / 🟠 ${high} / 🟡 ${medium}
             
             ${trivySummary}
             
