@@ -1,3 +1,0 @@
-[submodule "claude/.claude"]
-	path = claude/.claude
-	url = https://github.com/craftaholic/claude-orchestrator.git

@@ -1,5 +1,6 @@
 return {
   'mfussenegger/nvim-jdtls',
+  commit = "77ccaeb422f8c81b647605da5ddb4a7f725cda90",
   ft = 'java',
   dependencies = { 'hrsh7th/cmp-nvim-lsp' },
   config = function()

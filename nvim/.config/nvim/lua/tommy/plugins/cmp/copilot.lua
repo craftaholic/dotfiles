@@ -1,5 +1,6 @@
 return {
   "zbirenbaum/copilot.lua",
+  commit = "575646d22e4a80758935e92f7be7e210c1ceb5bc",
   cmd = "Copilot",
   build = ":Copilot auth",
   event = "InsertEnter",

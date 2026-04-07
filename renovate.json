@@ -1,0 +1,71 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Neovim plugin commits in Lua files",
+      "fileMatch": [
+        "^nvim/.config/nvim/lua/.+\\.lua$"
+      ],
+      "matchStrings": [
+        "\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Debian apt packages in Dockerfile",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "ARG\\s+(?<depName>[A-Z_]+)=(?<currentValue>[^\\s\\\\]+)"
+      ],
+      "datasourceTemplate": "debian",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update GitHub release binaries in Dockerfile",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "ARG\\s+MISE_VERSION=(?<currentValue>[^\\s\\\\]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "jdx/mise",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ],
+  "mise": {
+    "fileMatch": [
+      "^packages/.config/mise/config\\.toml$"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Group all Neovim plugin updates into one PR",
+      "matchManagers": ["regex"],
+      "matchFileNames": ["nvim/.config/nvim/lua/**/*.lua"],
+      "groupName": "neovim plugins",
+      "schedule": ["every weekend"]
+    },
+    {
+      "description": "Group mise tool updates into one PR",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["packages/.config/mise/config.toml"],
+      "groupName": "mise tools",
+      "schedule": ["every weekend"]
+    },
+    {
+      "description": "Group Dockerfile dependency updates into one PR",
+      "matchManagers": ["regex"],
+      "matchFileNames": ["Dockerfile"],
+      "groupName": "dockerfile dependencies",
+      "schedule": ["every weekend"]
+    }
+  ]
+}

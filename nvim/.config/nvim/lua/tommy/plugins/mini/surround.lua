@@ -1,5 +1,6 @@
 return {
   "echasnovski/mini.surround",
+  commit = "88c52297ed3e69ecf9f8652837888ecc727a28ee",
   version = "*",
   keys = function(_, keys)
     -- Populate the keys based on the user's options

@@ -1,0 +1,165 @@
+name: PR Build & Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+env:
+  DOCKER_IMAGE: devcontainer
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run Trivy vulnerability scanner
+        id: trivy
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.pull_request.number }}
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+          trivyignores: '.trivyignore'
+      
+      - name: Parse Trivy results
+        id: trivy-parse
+        run: |
+          # Parse Trivy JSON output
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
+          
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+          
+          # Create summary of top vulnerabilities (CRITICAL first, then HIGH)
+          echo "## Top Vulnerabilities" > trivy-summary.md
+          
+          # Process CRITICAL vulnerabilities first (show all CRITICAL, no limit)
+          CRITICAL_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}')
+          
+          if [ -n "$CRITICAL_VULNS" ]; then
+            echo "$CRITICAL_VULNS" >> trivy-summary.md
+            CRITICAL_COUNT=$(echo "$CRITICAL_VULNS" | wc -l)
+          else
+            CRITICAL_COUNT=0
+          fi
+          
+          # Process HIGH vulnerabilities (limit to 20 minus CRITICAL count, or all if no CRITICAL)
+          HIGH_LIMIT=$((20 - CRITICAL_COUNT))
+          if [ $HIGH_LIMIT -gt 0 ]; then
+            HIGH_VULNS=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | "\(.Severity)|\(.VulnerabilityID)|\(.PkgName)|\(.InstalledVersion)|\(.Title)"' trivy-results.json | sort | uniq -c | sort -rn | awk '{count=$1; $1=""; gsub(/^ /, ""); split($0, a, "|"); printf "- **[%s]** %s: %s %s (%d instance%s) - %s\n", a[1], a[2], a[3], a[4], count, (count>1?"s":""), a[5]}' | head -$HIGH_LIMIT)
+            
+            if [ -n "$HIGH_VULNS" ]; then
+              echo "$HIGH_VULNS" >> trivy-summary.md
+            fi
+          fi
+          
+          # If no vulnerabilities found at all
+          if [ $CRITICAL_COUNT -eq 0 ] && [ -z "$HIGH_VULNS" ]; then
+            echo "No critical or high vulnerabilities found" >> trivy-summary.md
+          fi
+      
+
+      - name: Create PR comment
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            const trivySummary = fs.readFileSync('trivy-summary.md', 'utf8');
+            
+            const buildStatus = '✅ Build successful';
+            
+            const critical = ${{ steps.trivy-parse.outputs.critical }};
+            const high = ${{ steps.trivy-parse.outputs.high }};
+            const medium = ${{ steps.trivy-parse.outputs.medium }};
+            
+            let securityStatus = '✅ No critical vulnerabilities';
+            let securityEmoji = '🟢';
+            
+            if (critical > 0) {
+              securityStatus = `🔴 ${critical} critical vulnerabilities found`;
+              securityEmoji = '🔴';
+            } else if (high > 0) {
+              securityStatus = `🟠 ${high} high vulnerabilities found`;
+              securityEmoji = '🟠';
+            } else if (medium > 0) {
+              securityStatus = `🟡 ${medium} medium vulnerabilities found`;
+              securityEmoji = '🟡';
+            }
+            
+            const comment = `## 🔍 PR Check Results
+            **Commit:** \`${{ github.event.pull_request.head.sha }}\`
+            **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            ### 🏗️ Build Status
+            ${buildStatus}
+            
+            ### ${securityEmoji} Security Scan
+            ${securityStatus}
+            
+            **Vulnerability Summary:**
+            - 🔴 Critical: ${critical}
+            - 🟠 High: ${high}
+            - 🟡 Medium: ${medium}
+            
+            ${trivySummary}
+            
+            ---
+            *Automated check by GitHub Actions*
+            `;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always()
+        with:
+          name: trivy-results
+          path: trivy-results.json
+          retention-days: 30
+      
+      - name: Fail if critical vulnerabilities found
+        if: steps.trivy-parse.outputs.critical > 0
+        run: |
+          echo "❌ Critical vulnerabilities found! Please review the security scan results."
+          exit 1

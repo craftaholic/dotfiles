@@ -1,5 +1,6 @@
 return {
   "echasnovski/mini.pairs",
+  commit = "b7fde3719340946feb75017ef9d75edebdeb0566",
   event = "VeryLazy",
   opts = {},
   keys = {

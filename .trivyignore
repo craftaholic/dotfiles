@@ -1,0 +1,197 @@
+# Trivy Ignore File
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-vulnerability-ids
+
+# ========================================
+# CRITICAL CVEs - Suppressed with Reason
+# ========================================
+
+# CVE-2025-68121: fzf 0.71.0 built with Go 1.23.12
+# Reason: Latest fzf release built with vulnerable Go version
+# Status: Waiting for fzf maintainer to release version built with Go 1.26+
+# Risk: Low - fzf is a fuzzy finder tool, crypto/tls vulnerability has minimal impact
+CVE-2025-68121
+
+# CVE-2026-33186: grpc-go in dev tools
+# Reason: Dev tools (terragrunt/golangci-lint) built with old grpc version
+# Status: Tools commented out or waiting for updates
+# Risk: Low - dev tools only, local use
+CVE-2026-33186
+
+# ========================================
+# HIGH CVEs - Go Stdlib v1.23.12 (Fixed in 1.26.1)
+# ========================================
+# Status: Go 1.26.1 includes fixes, but older tools built with Go 1.23.12 still show these
+
+# CVE-2026-27137: crypto/x509 email constraints (stdlib v1.26.0)
+# Reason: Fixed in Go 1.26.1 - detected in tools built with Go 1.26.0
+# Risk: Low - incorrect email constraint enforcement in certificates
+# Status: Wait for tool maintainers to rebuild with Go 1.26.1+
+CVE-2026-27137
+
+# CVE-2026-25679: net/url IPv6 parsing (stdlib v1.26.0 & v1.23.12)
+# Reason: Fixed in Go 1.26.1 - detected in tools built with Go 1.26.0 or earlier
+# Risk: Low - incorrect URL parsing of IPv6 literals
+# Status: Wait for tool maintainers to rebuild with Go 1.26.1+
+CVE-2026-25679
+
+# CVE-2025-61729: crypto/x509 DoS (stdlib v1.23.12)
+# Reason: Excessive resource consumption via crafted certificate
+# Risk: Low - requires processing malicious certificates
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61729
+
+# CVE-2025-61728: archive/zip CPU exhaustion (stdlib v1.23.12)
+# Reason: Excessive CPU when building archive index
+# Risk: Low - requires processing malicious ZIP files
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61728
+
+# CVE-2025-61726: net/url memory exhaustion (stdlib v1.23.12)
+# Reason: Memory exhaustion in query parameter parsing
+# Risk: Low - requires processing malicious URLs
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-61726
+
+# CVE-2025-58183: archive/tar unbounded allocation (stdlib v1.23.12)
+# Reason: Unbounded allocation when parsing GNU sparse map
+# Risk: Low - requires processing malicious TAR files
+# Status: Fixed in Go 1.26.0+, wait for tool rebuilds
+CVE-2025-58183
+
+# ========================================
+# HIGH CVEs - Go Dependencies
+# ========================================
+
+# CVE-2026-34986: go-jose v4.1.3 JWE decryption panic
+# Reason: Fixed in v4.1.4 - detected in tools bundling old go-jose
+# Risk: Low - DoS via panic in JWE decryption
+# Status: Need to update dependencies in Go projects
+CVE-2026-34986
+
+# ========================================
+# HIGH CVEs - Node.js Dependencies  
+# ========================================
+
+# CVE-2026-33671: picomatch 4.0.3 ReDoS
+# Reason: Fixed in 4.0.4 - extglob pattern catastrophic backtracking
+# Risk: Low - ReDoS via crafted glob patterns
+# Status: Need to update in Node.js projects
+CVE-2026-33671
+
+# CVE-2026-31802: tar 7.5.9 (node-tar) file overwrite
+# Reason: Fixed in 7.5.11 - symlink path traversal
+# Risk: Medium - file overwrite outside extraction directory
+# Status: Need to update node-tar in Node.js projects
+CVE-2026-31802
+
+# CVE-2026-29786: tar 7.5.9 (node-tar) hardlink traversal
+# Reason: Fixed in 7.5.11 - drive-relative linkpath vulnerability
+# Risk: Medium - path traversal via hardlinks
+# Status: Need to update node-tar in Node.js projects
+CVE-2026-29786
+
+# CVE-2026-27904: minimatch 10.2.2 ReDoS
+# Reason: Fixed in 10.2.3 - catastrophic backtracking
+# Risk: Low - ReDoS via crafted glob expressions
+# Status: Need to update in Node.js projects
+CVE-2026-27904
+
+# CVE-2026-27903: minimatch 10.2.2 ReDoS
+# Reason: Fixed in 10.2.3 - unbounded recursive backtracking
+# Risk: Low - ReDoS via crafted glob patterns
+# Status: Need to update in Node.js projects
+CVE-2026-27903
+
+# ========================================
+# HIGH CVEs - System Packages (Debian)
+# ========================================
+# Status: Debian stable maintainers explicitly marked "no DSA" (no backport planned)
+
+# CVE-2026-35535: sudo 1.9.16p2-3+deb13u1
+# Reason: Privilege escalation via mailer - no fix in Debian stable
+# Fixed in: Debian sid 1.9.17p2-5
+# Risk: High (privilege escalation), but requires specific mailer config
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-35535
+
+# CVE-2026-25210: libexpat1 2.7.1-2
+# Reason: Integer overflow in buffer reallocation - no fix in Debian stable
+# Fixed in: sid 2.7.5-1 (unstable only)
+# Risk: High (potential RCE), but requires parsing untrusted XML
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-25210
+
+# CVE-2026-27135: libnghttp2-14 1.64.0-1.1  
+# Reason: HTTP/2 DoS via malformed frames - no fix in Debian stable
+# Fixed in: sid 1.68.1-1 (unstable only)
+# Risk: Medium (DoS only, requires malformed HTTP/2 after session termination)
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-27135
+
+# CVE-2026-29111: libsystemd0/libudev1 257.9-1~deb13u1
+# Reason: IPC API vulnerability - no fix in Debian stable
+# Fixed in: sid 260.1-1 (unstable only)
+# Risk: Medium (requires systemd as PID 1, rare in containers)
+# Status: Awaiting Debian stable backport (marked "no DSA")
+CVE-2026-29111
+
+# CVE-2025-69720: libtinfo6 6.5+20250216-2
+# Reason: Buffer overflow in infocmp tool - no fix in Debian stable  
+# Fixed in: sid 6.6+20251231-1 (unstable only)
+# Risk: Low (affects CLI tool `infocmp`, not library runtime)
+# Status: Debian marked as "postponed"
+CVE-2025-69720
+
+# ========================================
+# HIGH CVEs - Kernel Headers (NO RISK)
+# ========================================
+# Package: linux-libc-dev (kernel headers only, no runtime code)
+# Reason: Header files for compilation, not actual kernel code
+# Risk: None - containers use host kernel, not these headers
+
+# Ancient CVEs (2013-2021)
+CVE-2013-7445  # kernel: GEM objects memory exhaustion (2013)
+CVE-2019-19449 # kernel: f2fs slab-out-of-bounds (2019)
+CVE-2019-19814 # kernel: f2fs out-of-bounds write (2019)
+CVE-2021-3847  # kernel: privilege escalation (2021)
+CVE-2021-3864  # kernel: dumpable setting issue (2021)
+
+# 2024 CVEs
+CVE-2024-21803 # kernel: bluetooth UAF af_bluetooth.c
+CVE-2024-58015 # kernel: wifi ath12k out-of-bound access
+CVE-2024-58093 # kernel: PCI/ASPM UAF hot-unplug
+
+# 2025 CVEs
+CVE-2025-22104 # kernel: ibmvnic hex dump helpers
+CVE-2025-38137 # kernel: PCI/pwrctrl rescan work cancel
+CVE-2025-38187 # kernel: drm/nouveau UAF r535_gsp_rpc_push
+CVE-2025-38204 # kernel: jfs array-index-out-of-bounds
+CVE-2025-38206 # kernel: exFAT double free DoS
+CVE-2025-38421 # kernel: amd pmf device managed allocations
+CVE-2025-38584 # kernel: padata UAF
+CVE-2025-38627 # kernel: f2fs compress UAF
+CVE-2025-38636 # kernel: rv monitors tracepoints
+CVE-2025-39859 # kernel: ptp ocp UAF watchdog
+CVE-2025-39862 # kernel: wifi mt76 list corruption
+CVE-2025-39958 # kernel: iommu s390 surprise removal
+CVE-2025-40064 # kernel: smc UAF pnet_find_base_ndev
+CVE-2025-40135 # kernel: ipv6 RCU ip6_xmit
+CVE-2025-40158 # kernel: ipv6 RCU ip6_output
+CVE-2025-40168 # kernel: smc dst_get prfx_match
+CVE-2025-71152 # kernel: net dsa conduit reference
+CVE-2025-71221 # kernel: dmaengine mmp_pdma race condition
+
+# 2026 CVEs
+CVE-2026-23102 # kernel: SVE context restoration DoS
+CVE-2026-23171 # kernel: bonding module UAF
+CVE-2026-23208 # kernel: ALSA usb-audio excessive frames
+CVE-2026-23226 # kernel: ksmbd chann_lock
+CVE-2026-23227 # kernel: drm/exynos vidi
+CVE-2026-23231 # kernel: nf_tables UAF
+CVE-2026-23243 # kernel: RDMA umad
+CVE-2026-23270 # kernel: traffic control UAF
+CVE-2026-23375 # kernel: mm THP deny
+CVE-2026-23392 # kernel: netfilter nf_tables RCU
+CVE-2026-23450 # kernel: net/smc NULL deref
+CVE-2026-23455 # kernel: netfilter h323 check
+CVE-2026-31402 # kernel: nfsd heap overflow
