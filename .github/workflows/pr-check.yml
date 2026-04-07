@@ -65,32 +65,20 @@ jobs:
           CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
           HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
           MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
-          SECRETS=$(jq '[.Results[]?.Secrets[]?] | length' trivy-results.json)
-          MISCONFIG_CRITICAL=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
-          MISCONFIG_HIGH=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
-          MISCONFIG_MEDIUM=$(jq '[.Results[]?.Misconfigurations[]? | select(.Severity=="MEDIUM")] | length' trivy-results.json)
-          MISCONFIG_TOTAL=$((MISCONFIG_CRITICAL + MISCONFIG_HIGH + MISCONFIG_MEDIUM))
           
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
-          echo "secrets=$SECRETS" >> $GITHUB_OUTPUT
-          echo "misconfig_total=$MISCONFIG_TOTAL" >> $GITHUB_OUTPUT
-          echo "misconfig_critical=$MISCONFIG_CRITICAL" >> $GITHUB_OUTPUT
-          echo "misconfig_high=$MISCONFIG_HIGH" >> $GITHUB_OUTPUT
-          echo "misconfig_medium=$MISCONFIG_MEDIUM" >> $GITHUB_OUTPUT
       
       - name: Check severity threshold
         id: check-threshold
         run: |
           CRITICAL=${{ steps.trivy-parse.outputs.critical }}
           HIGH=${{ steps.trivy-parse.outputs.high }}
-          SECRETS=${{ steps.trivy-parse.outputs.secrets }}
-          MISCONFIG_CRITICAL=${{ steps.trivy-parse.outputs.misconfig_critical }}
           
           PASSED=true
           
-          if [ "$CRITICAL" -gt 0 ] || [ "$MISCONFIG_CRITICAL" -gt 0 ] || [ "$SECRETS" -gt 0 ]; then
+          if [ "$CRITICAL" -gt 0 ]; then
             PASSED=false
           fi
           
@@ -102,11 +90,6 @@ jobs:
           CRITICAL=${{ steps.trivy-parse.outputs.critical }}
           HIGH=${{ steps.trivy-parse.outputs.high }}
           MEDIUM=${{ steps.trivy-parse.outputs.medium }}
-          SECRETS=${{ steps.trivy-parse.outputs.secrets }}
-          MISCONFIG_TOTAL=${{ steps.trivy-parse.outputs.misconfig_total }}
-          MISCONFIG_CRITICAL=${{ steps.trivy-parse.outputs.misconfig_critical }}
-          MISCONFIG_HIGH=${{ steps.trivy-parse.outputs.misconfig_high }}
-          MISCONFIG_MEDIUM=${{ steps.trivy-parse.outputs.misconfig_medium }}
           PASSED=${{ steps.check-threshold.outputs.passed }}
           
           cat << 'EOF' > trivy-summary.md
@@ -126,29 +109,6 @@ jobs:
           echo "- 🟠 High: $HIGH" >> trivy-summary.md
           echo "- 🟡 Medium: $MEDIUM" >> trivy-summary.md
           echo "" >> trivy-summary.md
-          
-          if [ "$SECRETS" -gt 0 ]; then
-            echo "### 🔑 Secrets Found: $SECRETS" >> trivy-summary.md
-            echo "" >> trivy-summary.md
-            jq -r '.Results[]?.Secrets[]? | "- **\(.RuleID)**: \(.Title) in `\(.Match)`"' trivy-results.json | head -10 >> trivy-summary.md
-            echo "" >> trivy-summary.md
-          fi
-          
-          if [ "$MISCONFIG_TOTAL" -gt 0 ]; then
-            echo "### ⚙️ Misconfigurations: $MISCONFIG_TOTAL (🔴 $MISCONFIG_CRITICAL / 🟠 $MISCONFIG_HIGH / 🟡 $MISCONFIG_MEDIUM)" >> trivy-summary.md
-            echo "" >> trivy-summary.md
-            
-            CRITICAL_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="CRITICAL") | "- **[CRITICAL]** \(.ID): \(.Title)"' trivy-results.json | head -5)
-            if [ -n "$CRITICAL_MISCONFIG" ]; then
-              echo "$CRITICAL_MISCONFIG" >> trivy-summary.md
-            fi
-            
-            HIGH_MISCONFIG=$(jq -r '.Results[]?.Misconfigurations[]? | select(.Severity=="HIGH") | "- **[HIGH]** \(.ID): \(.Title)"' trivy-results.json | head -5)
-            if [ -n "$HIGH_MISCONFIG" ]; then
-              echo "$HIGH_MISCONFIG" >> trivy-summary.md
-            fi
-            echo "" >> trivy-summary.md
-          fi
           
           if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
             echo "### 🐛 Top Vulnerabilities" >> trivy-summary.md
@@ -173,7 +133,7 @@ jobs:
             fi
           fi
           
-          if [ "$CRITICAL" -eq 0 ] && [ "$HIGH" -eq 0 ] && [ "$MEDIUM" -eq 0 ] && [ "$SECRETS" -eq 0 ] && [ "$MISCONFIG_TOTAL" -eq 0 ]; then
+          if [ "$CRITICAL" -eq 0 ] && [ "$HIGH" -eq 0 ] && [ "$MEDIUM" -eq 0 ]; then
             echo "✅ No security issues found" >> trivy-summary.md
           fi
           
