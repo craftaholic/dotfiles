@@ -198,6 +198,8 @@ jobs:
     steps:
       - name: Create PR comment
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          SCAN_SUMMARY: ${{ needs.build-and-scan.outputs.scan-summary }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -211,17 +213,17 @@ jobs:
             let securityEmoji = '🟢';
             
             if (!scanPassed) {
-              securityStatus = `🔴 Critical issues found`;
+              securityStatus = '🔴 Critical issues found';
               securityEmoji = '🔴';
             } else if (high > 0) {
-              securityStatus = `🟠 High severity issues found`;
+              securityStatus = '🟠 High severity issues found';
               securityEmoji = '🟠';
             } else if (medium > 0) {
-              securityStatus = `🟡 Medium severity issues found`;
+              securityStatus = '🟡 Medium severity issues found';
               securityEmoji = '🟡';
             }
             
-            const scanSummary = `${{ needs.build-and-scan.outputs.scan-summary }}`;
+            const scanSummary = process.env.SCAN_SUMMARY;
             
             const comment = `## 🔍 PR Check Results
             **Commit:** \`${{ github.event.pull_request.head.sha }}\`
