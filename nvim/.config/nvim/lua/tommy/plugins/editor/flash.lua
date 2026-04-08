@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "folke/flash.nvim",
   commit = "fcea7ff883235d9024dc41e638f164a450c14ca2",
   event = "VeryLazy",

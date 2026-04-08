@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "folke/todo-comments.nvim",
   commit = "31e3c38ce9b29781e4422fc0322eb0a21f4e8668",
   cmd = { "TodoFzfLua" },

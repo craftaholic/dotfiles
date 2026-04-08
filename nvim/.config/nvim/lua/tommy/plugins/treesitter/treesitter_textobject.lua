@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "nvim-treesitter/nvim-treesitter-textobjects",
   commit = "5ca4aaa6efdcc59be46b95a3e876300cfead05ef",
   config = function()

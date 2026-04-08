@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "nvim-treesitter/nvim-treesitter",
   commit = "42fc28ba918343ebfd5565147a42a26580579482",
   version = false, -- last release is way too old and doesn't work on Windows

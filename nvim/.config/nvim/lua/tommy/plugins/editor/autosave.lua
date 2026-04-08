@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "Pocco81/auto-save.nvim",
   commit = "979b6c82f60cfa80f4cf437d77446d0ded0addf0",
   config = function()

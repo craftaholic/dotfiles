@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "echasnovski/mini.surround",
   commit = "88c52297ed3e69ecf9f8652837888ecc727a28ee",
   version = "*",

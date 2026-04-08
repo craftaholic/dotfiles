@@ -8,15 +8,26 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Update Neovim plugin commits in Lua files",
+      "description": "Update Neovim plugin commits with explicit branch comment",
       "fileMatch": [
         "^nvim/.config/nvim/lua/.+\\.lua$"
       ],
       "matchStrings": [
-        "\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
+        "-- renovate: branch=(?<currentValue>\\S+)\\s*\\n\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
+      ],
+      "datasourceTemplate": "github-digest"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Neovim plugin commits (default: master branch)",
+      "fileMatch": [
+        "^nvim/.config/nvim/lua/.+\\.lua$"
+      ],
+      "matchStrings": [
+        "return \\{\\s*\\n\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
       ],
       "datasourceTemplate": "github-digest",
-      "currentValueTemplate": "main"
+      "currentValueTemplate": "master"
     },
     {
       "customType": "regex",
@@ -50,6 +61,11 @@
     ]
   },
   "packageRules": [
+    {
+      "description": "Wait 14 days before updating to avoid supply chain attacks",
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
+      "stabilityDays": 14
+    },
     {
       "description": "Enable digest pinning for GitHub Actions",
       "matchManagers": ["github-actions"],

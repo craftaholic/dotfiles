@@ -1,4 +1,5 @@
 return {
+  -- renovate: branch=main
   "folke/noice.nvim",
   commit = "7bfd942445fb63089b59f97ca487d605e715f155",
   event = "VeryLazy",
