@@ -5,6 +5,15 @@
     "enabled": true,
     "automerge": false
   },
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"]
+  },
+  "dependencyDashboard": true,
+  "dependencyDashboardOSVVulnerabilitySummary": "all",
+  "separateMajorMinor": true,
+  "internalChecksFilter": "strict",
   "customManagers": [
     {
       "customType": "regex",
@@ -65,6 +74,11 @@
       "description": "Wait 14 days before updating to avoid supply chain attacks",
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "stabilityDays": 14
+    },
+    {
+      "description": "Security updates bypass stability period for immediate patching",
+      "matchUpdateTypes": ["security"],
+      "stabilityDays": 0
     },
     {
       "description": "Enable digest pinning for GitHub Actions",
