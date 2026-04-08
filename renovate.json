@@ -12,7 +12,8 @@
         "\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
       ],
       "datasourceTemplate": "github-tags",
-      "versioningTemplate": "loose"
+      "versioningTemplate": "loose",
+      "currentValueTemplate": "main"
     },
     {
       "customType": "regex",
