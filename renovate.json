@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
+  "digest": {
+    "enabled": true,
+    "automerge": false
+  },
   "customManagers": [
     {
       "customType": "regex",
@@ -11,8 +15,7 @@
       "matchStrings": [
         "\\s*[\"'](?<depName>[^/]+/[^\"']+)[\"'],\\s*\\n\\s*commit\\s*=\\s*[\"'](?<currentDigest>[a-f0-9]{40})[\"']"
       ],
-      "datasourceTemplate": "github-tags",
-      "versioningTemplate": "loose",
+      "datasourceTemplate": "github-digest",
       "currentValueTemplate": "main"
     },
     {
@@ -47,6 +50,17 @@
     ]
   },
   "packageRules": [
+    {
+      "description": "Enable digest pinning for GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
+      "description": "Group GitHub Actions updates into one PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "schedule": ["every weekend"]
+    },
     {
       "description": "Group all Neovim plugin updates into one PR",
       "matchManagers": ["regex"],
