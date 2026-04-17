@@ -65,6 +65,21 @@ alias tn='tmux new-session -s'
 # misc
 alias ls='ls -la --color'
 
+# devcontainer
+alias dc='devcontainer'
+alias dch='echo "dc: devcontainer
+dch: show help utils
+dci: init devcontainer default config
+dcid: init devcontainer with docker config
+dce: exec into the devcontainer with zsh
+dcu: start the devcontainer
+dcur: start the devcontainer and remove existing container if it exists"'
+alias dci='mkdir -p .devcontainer && cp ~/.template/devcontainer/devcontainer.json .devcontainer/devcontainer.json'
+alias dcid='mkdir -p .devcontainer && cp ~/.template/devcontainer/devcontainer-docker.json .devcontainer/devcontainer.json'
+alias dce='devcontainer exec zsh'
+alias dcu='devcontainer up'
+alias dcur='devcontainer up --remove-existing-container'
+
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan,underline"
 # ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE="20"
 # ZSH_AUTOSUGGEST_USE_ASYNC=1
