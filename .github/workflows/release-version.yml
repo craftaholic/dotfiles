@@ -100,7 +100,7 @@ jobs:
           SCAN_SUMMARY="${{ needs.security-scan.outputs.scan-summary }}"
           RELEASE_TAG="${{ github.event.release.tag_name }}"
           
-          cat << 'EOF' > security-addendum.md
+          cat << EOF > security-addendum.md
           
           ---
           
