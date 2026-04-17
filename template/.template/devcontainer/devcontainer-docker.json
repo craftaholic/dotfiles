@@ -1,0 +1,38 @@
+{
+  "name": "Custom devcontainer",
+  "image": "ghcr.io/craftaholic/devcontainer:latest",
+
+  "containerUser": "dev",
+  "remoteUser": "dev",
+  "updateRemoteUserUID": false,
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "rootless": true,
+      "moby": false
+    }
+  },
+
+  "runArgs": [
+    "--privileged",
+//    "--env-file", ".env"
+  ],
+
+  "containerEnv": {
+    "DOCKER_TLS_CERTDIR": "",
+  },
+
+  "remoteEnv": {
+//    "AWS_BEARER_TOKEN_BEDROCK": "${localEnv:AWS_BEARER_TOKEN_BEDROCK}"
+  },
+
+  "mounts": [
+    // Using variables
+    "source=${localEnv:HOME}/.aws,target=/home/dev/.aws,type=bind,readonly",
+    "source=${localEnv:HOME}/.config/opencode,target=/home/dev/.config/opencode,type=bind,readonly",
+//    "source=${localEnv:HOME}/Documents/work/utils/tc-platform-dotfiles,target=/home/dev/Documents/work/utils/tc-platform-dotfiles,type=bind,readonly"
+  ],
+
+  "forwardPorts": []
+}

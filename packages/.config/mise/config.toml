@@ -31,6 +31,7 @@ terragrunt = "1.0.0"
 awscli = { version = "2.34.25", symlink_bins = "true" }
 jq = "1.8.1"
 yq = "4.52.5"
+opencode = "1.4.6"
 
 [settings]
 experimental = true
