@@ -38,7 +38,6 @@ export TERM=tmux-256color
 ### Aliases
 alias ga='git add'
 alias gc='git commit -m'
-
 alias gp='git push'
 alias gs='git status'
 alias jh='./mvnw spring-boot:run'
