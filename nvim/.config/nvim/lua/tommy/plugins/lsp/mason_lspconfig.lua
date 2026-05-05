@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "williamboman/mason-lspconfig.nvim",
-  commit = "a324581a3c83fdacdb9804b79de1cbe00ce18550",
+  commit = "0c2823e0418f3d9230ff8b201c976e84de1cb401",
   opts = {
     ensure_installed = {
       "gopls",

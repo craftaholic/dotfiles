@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "williamboman/mason.nvim",
-  commit = "44d1e90e1f66e077268191e3ee9d2ac97cc18e65",
+  commit = "cb8445f8ce85d957416c106b780efd51c6298f89",
   cmd = "Mason",
   keys = {
     { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" }
