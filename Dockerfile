@@ -16,7 +16,8 @@ ARG GIT_VERSION=1:2.47.3-0+deb13u1 \
   TMUX_VERSION=3.5a-3 \
   CA_CERTIFICATES_VERSION=20250419 \
   GCC_VERSION=4:14.2.0-1 \
-  GPP_VERSION=4:14.2.0-1
+  GPP_VERSION=4:14.2.0-1 \
+  UNZIP_VERSION=6.0-29
 
 ARG MISE_VERSION=2026.4.18
 
@@ -34,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates=${CA_CERTIFICATES_VERSION} \
   gcc=${GCC_VERSION} \
   g++=${GPP_VERSION} \
+  unzip=${UNZIP_VERSION} \
   && apt-get upgrade -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
@@ -68,4 +70,3 @@ RUN export PATH="/home/${USER_NAME}/.local/share/mise/shims:$PATH" && \
   timeout 60 nvim --headless -c "TSUpdate" 2>&1 || true
 
 ENTRYPOINT ["/bin/zsh"]
-
