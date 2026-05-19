@@ -10,7 +10,7 @@ lazygit = "0.61.1"
 neovim = "0.12.1"
 
 ### Dev tools
-# bun = "1.3.8"
+bun = "1.3.8"
 go = "1.26.2"
 golangci-lint = "2.11.4"
 # java = "25.0.2"
