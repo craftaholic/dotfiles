@@ -4,7 +4,7 @@ return {
   commit = "d9508cc1d05ffcdc91a32dfd38fc1013a56b20da",
   lazy = false,
   dependencies = {
-    "nvim-tree/nvim-web-devicons", -- optional, for icons
+    { "nvim-tree/nvim-web-devicons", commit = "7d8dad2c837fcdf2e65997e68657c1a21c568074" }, -- optional, for icons
   },
   keys = {
     -- Buffer navigation

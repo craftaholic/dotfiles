@@ -5,10 +5,10 @@ return {
   version = false, -- last release is way too old
   event = "InsertEnter",
   dependencies = {
-    "hrsh7th/cmp-nvim-lsp",
-    "hrsh7th/cmp-buffer",
-    "hrsh7th/cmp-path",
-    "saadparwaiz1/cmp_luasnip",
+    { "hrsh7th/cmp-nvim-lsp", commit = "cbc7b02bb99fae35cb42f514762b89b5126651ef" },
+    { "hrsh7th/cmp-buffer", commit = "b74fab3656eea9de20a9b8116afa3cfc4ec09657" },
+    { "hrsh7th/cmp-path", commit = "c642487086dbd9a93160e1679a1327be111cbc25" },
+    { "saadparwaiz1/cmp_luasnip", commit = "98d9cb5c2c38532bd9bdb481067b20fea8f32e90" },
     -- {
     --   "zbirenbaum/copilot-cmp",
     --   dependencies = "copilot.lua",
@@ -20,6 +20,7 @@ return {
     -- },
     {
       "onsails/lspkind.nvim",
+      commit = "c7274c48137396526b59d86232eabcdc7fed8a32",
       config = function()
         local opts = {
           mode = 'symbol_text',

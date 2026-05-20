@@ -17,6 +17,7 @@ return {
   dependencies = {
     {
       "nvim-treesitter/nvim-treesitter-textobjects",
+      commit = "5ca4aaa6efdcc59be46b95a3e876300cfead05ef",
       config = function()
         -- When in diff mode, we want to use the default
         -- vim text objects c & C instead of the treesitter ones.

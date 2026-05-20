@@ -3,3 +3,5 @@ env/
 deploy.sh
 .claude/*
 .context/*
+
+.omo/

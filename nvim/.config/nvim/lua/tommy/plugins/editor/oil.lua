@@ -6,7 +6,7 @@ return {
   -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
   -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
   -- Optional dependencies
-  dependencies = { { "echasnovski/mini.icons", opts = {} } },
+  dependencies = { { "echasnovski/mini.icons", commit = "520995f1d75da0e4cc901ee95080b1ff2bc46b94", opts = {} } },
   lazy = false,
   opts = {
     -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)

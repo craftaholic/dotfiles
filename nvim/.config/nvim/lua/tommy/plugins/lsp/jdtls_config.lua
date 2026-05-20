@@ -2,7 +2,7 @@ return {
   'mfussenegger/nvim-jdtls',
   commit = "77ccaeb422f8c81b647605da5ddb4a7f725cda90",
   ft = 'java',
-  dependencies = { 'hrsh7th/cmp-nvim-lsp' },
+  dependencies = { { "hrsh7th/cmp-nvim-lsp", commit = "cbc7b02bb99fae35cb42f514762b89b5126651ef" } },
   config = function()
     local jdtls = require('jdtls')
 

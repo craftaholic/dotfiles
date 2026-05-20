@@ -7,6 +7,7 @@ return {
   dependencies = {
     {
       "rcarriga/nvim-dap-ui",
+      commit = "1a66cabaa4a4da0be107d5eda6d57242f0fe7e49",
       opts = {},
       keys = {
         { "<leader>du", function() require("dapui").toggle({}) end, desc = "Dap UI" },
@@ -16,14 +17,17 @@ return {
     -- virtual text for the debugger
     {
       "theHamsta/nvim-dap-virtual-text",
+      commit = "fbdb48c2ed45f4a8293d0d483f7730d24467ccb6",
       opts = {},
     },
     {
       "leoluz/nvim-dap-go",
+      commit = "b4421153ead5d726603b02743ea40cf26a51ed5f",
       opts = {},
     },
     {
       "nvim-neotest/nvim-nio",
+      commit = "21f5324bfac14e22ba26553caf69ec76ae8a7662",
     },
   },
 
