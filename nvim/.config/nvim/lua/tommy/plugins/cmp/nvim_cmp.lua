@@ -9,15 +9,15 @@ return {
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-path",
     "saadparwaiz1/cmp_luasnip",
-    {
-      "zbirenbaum/copilot-cmp",
-      dependencies = "copilot.lua",
-      opts = {},
-      config = function(_, opts)
-        local copilot_cmp = require("copilot_cmp")
-        copilot_cmp.setup(opts)
-      end,
-    },
+    -- {
+    --   "zbirenbaum/copilot-cmp",
+    --   dependencies = "copilot.lua",
+    --   opts = {},
+    --   config = function(_, opts)
+    --     local copilot_cmp = require("copilot_cmp")
+    --     copilot_cmp.setup(opts)
+    --   end,
+    -- },
     {
       "onsails/lspkind.nvim",
       config = function()
@@ -107,7 +107,7 @@ return {
         { name = "nvim_lsp", group_index = 2 },
         { name = "luasnip",  group_index = 2 },
         { name = "path",     group_index = 2 },
-        { name = "copilot",  group_index = 2 },
+        -- { name = "copilot",  group_index = 2 },
         { name = "buffer",   group_index = 2 },
       }),
 
@@ -120,7 +120,7 @@ return {
       sorting = {
         priority_weight = 2,
         comparators = {
-          require("copilot_cmp.comparators").prioritize,
+          -- require("copilot_cmp.comparators").prioritize,
 
           -- Below is the default comparitor list and order for nvim-cmp
           cmp.config.compare.offset,
@@ -147,11 +147,11 @@ return {
     cmp.setup(opts)
 
     cmp.event:on("menu_opened", function()
-      vim.b.copilot_suggestion_hidden = true
+      -- vim.b.copilot_suggestion_hidden = true
     end)
 
     cmp.event:on("menu_closed", function()
-      vim.b.copilot_suggestion_hidden = false
+      -- vim.b.copilot_suggestion_hidden = false
     end)
   end,
 }
