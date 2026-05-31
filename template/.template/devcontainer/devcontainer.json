@@ -20,11 +20,14 @@
   },
 
   "mounts": [
-    // Using variables
+    // AI Config mount
     "source=${localEnv:HOME}/.config/opencode/opencode.json,target=/home/dev/.config/opencode/opencode.json,type=bind,readonly",
     "source=${localEnv:HOME}/.config/opencode/oh-my-openagent.json,target=/home/dev/.config/opencode/oh-my-openagent.json,type=bind,readonly",
-    "source=${localEnv:HOME}/.config/ocp,target=/home/dev/.config/ocp,type=bind,readonly",
+    "source=${localEnv:HOME}/.local/share/opencode,target=/home/dev/.local/share/opencode,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.config/ocp,target=/home/dev/.config/ocp,type=bind",
     "source=${localEnv:HOME}/.config/tc-tymekit,target=/home/dev/.config/tc-tymekit,type=bind,readonly",
+
+    // Temp cred mount incase it needed
     "source=${localWorkspaceFolder}/.devcontainer/aws-generated/credentials,target=/home/dev/.aws/credentials,type=bind,consistency=cached"
   ],
 
