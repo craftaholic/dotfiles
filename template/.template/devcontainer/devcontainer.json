@@ -15,14 +15,15 @@
   },
 
   "remoteEnv": {
+    "AWS_PAGER": "" // This is for no pager requires for aws cli
 //    "AWS_BEARER_TOKEN_BEDROCK": "${localEnv:AWS_BEARER_TOKEN_BEDROCK}"
   },
 
   "mounts": [
     // Using variables
-    "source=${localEnv:HOME}/.aws,target=/home/dev/.aws,type=bind,readonly",
     "source=${localEnv:HOME}/.config/opencode,target=/home/dev/.config/opencode,type=bind,readonly",
-//    "source=${localEnv:HOME}/Documents/work/utils/tc-platform-dotfiles,target=/home/dev/Documents/work/utils/tc-platform-dotfiles,type=bind,readonly"
+    "source=${localEnv:HOME}/.config/tc-tymekit,target=/home/dev/.config/tc-tymekit,type=bind,readonly",
+    "source=${localWorkspaceFolder}/.devcontainer/aws-generated/credentials,target=/home/dev/.aws/credentials,type=bind,consistency=cached"
   ],
 
   "forwardPorts": []
