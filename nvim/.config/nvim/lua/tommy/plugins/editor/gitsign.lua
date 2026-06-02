@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "lewis6991/gitsigns.nvim",
-  commit = "7c4faa3540d0781a28588cafbd4dd187a28ac6e3",
+  commit = "dd3f588bacbeb041be6facf1742e42097f62165d",
   opts = {
     signs = {
       add = { text = "▎" },

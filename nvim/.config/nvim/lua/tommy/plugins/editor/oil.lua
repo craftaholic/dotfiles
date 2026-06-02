@@ -1,6 +1,6 @@
 return {
   'stevearc/oil.nvim',
-  commit = "0fcc83805ad11cf714a949c98c605ed717e0b83e",
+  commit = "b91ee5a77a6a9605d9c1aaf4fda74b66082c8297",
   ---@module 'oil'
   ---@type oil.SetupOpts
   -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons

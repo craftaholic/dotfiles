@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "echasnovski/mini.ai",
-  commit = "4b0a6207341d895b6cfe9bcb1e4d3e8607bfe4f4",
+  commit = "deacc8e9cf05df0297e3b14a08c2f8a415045c6f",
   verson = "*",
   event = "VeryLazy",
   opts = function()

@@ -1,6 +1,6 @@
 return {
   "neovim/nvim-lspconfig",
-  commit = "2163c54bb6cfec53e3e555665ada945b8c8331b9",
+  commit = "07dff35e7c95288861200b788ef32d6103f107f0",
   event = { 'BufEnter', 'BufNewFile' },
   config = function()
     local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
