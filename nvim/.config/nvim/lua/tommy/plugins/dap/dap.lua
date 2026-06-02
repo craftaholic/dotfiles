@@ -1,6 +1,6 @@
 return {
   "mfussenegger/nvim-dap",
-  commit = "a9d8cb68ee7184111dc66156c4a2ebabfbe01bc5",
+  commit = "531771530d4f82ad2d21e436e3cc052d68d7aebb",
   recommended = true,
   desc = "Debugging support. Requires language specific adapters to be configured. (see lang extras)",
 

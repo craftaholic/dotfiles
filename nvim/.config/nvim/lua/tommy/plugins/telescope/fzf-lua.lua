@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "ibhagwan/fzf-lua",
-  commit = "d9508cc1d05ffcdc91a32dfd38fc1013a56b20da",
+  commit = "988416cc782dfe28bff3f0da9b8c943b236cd86a",
   lazy = false,
   dependencies = {
     { "nvim-tree/nvim-web-devicons", commit = "7d8dad2c837fcdf2e65997e68657c1a21c568074" }, -- optional, for icons

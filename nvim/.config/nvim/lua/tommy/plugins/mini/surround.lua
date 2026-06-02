@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "echasnovski/mini.surround",
-  commit = "88c52297ed3e69ecf9f8652837888ecc727a28ee",
+  commit = "d12d8e6ea8e4d9d3e6fb0e3ff11c84fcce2299ac",
   version = "*",
   keys = function(_, keys)
     -- Populate the keys based on the user's options

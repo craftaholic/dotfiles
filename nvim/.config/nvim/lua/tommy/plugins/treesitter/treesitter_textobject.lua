@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "nvim-treesitter/nvim-treesitter-textobjects",
-  commit = "5ca4aaa6efdcc59be46b95a3e876300cfead05ef",
+  commit = "851e865342e5a4cb1ae23d31caf6e991e1c99f1e",
   config = function()
     -- When in diff mode, we want to use the default
     -- vim text objects c & C instead of the treesitter ones.
