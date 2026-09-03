@@ -1,6 +1,6 @@
 return {
   "nvim-lualine/lualine.nvim",
-  commit = "47f91c416daef12db467145e16bed5bbfe00add8",
+  commit = "221ce6b2d999187044529f49da6554a92f740a96",
   event = "VeryLazy",
   init = function()
     vim.g.lualine_laststatus = vim.o.laststatus
