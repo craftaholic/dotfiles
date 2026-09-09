@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "echasnovski/mini.pairs",
-  commit = "b7fde3719340946feb75017ef9d75edebdeb0566",
+  commit = "b1c5a726921b7a8c9321e9a7a208aa0571de5810",
   event = "VeryLazy",
   opts = {},
   keys = {
