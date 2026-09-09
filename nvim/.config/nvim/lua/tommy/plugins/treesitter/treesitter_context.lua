@@ -1,6 +1,6 @@
 return {
   "nvim-treesitter/nvim-treesitter-context",
-  commit = "529ee357b8c03d76ff71233afed68fd0f5fe10b1",
+  commit = "f3061339b8eaf9fda873600bc425b8d2d8502533",
   enabled = true,
   opts = { mode = "cursor", max_lines = 3 },
 }
