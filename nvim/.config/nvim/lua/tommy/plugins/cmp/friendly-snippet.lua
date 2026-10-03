@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "rafamadriz/friendly-snippets",
-  commit = "6cd7280adead7f586db6fccbd15d2cac7e2188b9",
+  commit = "b4d01b0fdf3c9a549961c2f9ffe8dc09be166219",
   config = function()
     require("luasnip.loaders.from_vscode").lazy_load()
   end,
