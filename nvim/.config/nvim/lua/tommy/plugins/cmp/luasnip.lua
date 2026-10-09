@@ -1,6 +1,6 @@
 return {
   "L3MON4D3/LuaSnip",
-  commit = "dae4f5aaa3574bd0c2b9dd20fb9542a02c10471c",
+  commit = "0abc8f390b278c3b4aabc4c004ac8a088b65cf24",
   build = (not jit.os:find("Windows"))
       and "echo 'NOTE: jsregexp is optional, so not a big deal if it fails to build'; make install_jsregexp"
       or nil,

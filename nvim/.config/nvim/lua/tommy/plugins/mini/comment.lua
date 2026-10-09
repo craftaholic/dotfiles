@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "echasnovski/mini.comment",
-  commit = "597d32ed2c9fbfbf9a250bec7c6b9035f71214f5",
+  commit = "27a29d6b949b9497f80a0a03421e89fed71d8c37",
   event = "VeryLazy",
   opts = {},
 }
