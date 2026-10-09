@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "folke/flash.nvim",
-  commit = "fcea7ff883235d9024dc41e638f164a450c14ca2",
+  commit = "5f0f270fdc7c5b0c21d903ee85b9cb06f2ac636a",
   event = "VeryLazy",
   vscode = true,
   --@type Flash.Config

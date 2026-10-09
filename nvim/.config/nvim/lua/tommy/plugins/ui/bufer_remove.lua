@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "echasnovski/mini.bufremove",
-  commit = "ee69f823f84508c556127a5882760d9783692023",
+  commit = "281bb1a2c60c3618c854bef2c0933276eb2362c2",
 
   keys = {
     {
