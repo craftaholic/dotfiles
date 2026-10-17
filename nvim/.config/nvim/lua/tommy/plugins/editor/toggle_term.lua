@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "akinsho/toggleterm.nvim",
-  commit = "50ea089fc548917cc3cc16b46a8211833b9e3c7c",
+  commit = "9a88eae817ef395952e08650b3283726786fb5fb",
   version = "*",
   lazy = false,
   keys = {
