@@ -1,7 +1,7 @@
 return {
   -- renovate: branch=main
   "catppuccin/nvim",
-  commit = "12c004cde3f36cb1d57242f1e6aac46b09a0e5b4",
+  commit = "edefef779ab08ce1a4a404713e3012b0d202bd35",
   name = "catppuccin",
   priority = 1000,
   opts = {
